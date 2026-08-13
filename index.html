@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Automated Audio Remixer & Visualizer</title>
+    <title>AURA // AUTOMATED SHORTS ENGINE</title>
     <style>
         :root {
-            --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --text: #f8fafc;
+            --bg: #05070f;
+            --card: #0d111d;
+            --primary: #00f0ff;
+            --text: #f8fafc;
+            --border: #1e293b;
         }
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
@@ -19,292 +23,377 @@
             justify-content: center;
             flex-wrap: wrap;
         }
-        .controls {
+        .panel {
             background: var(--card);
             padding: 24px;
             border-radius: 12px;
             width: 100%;
-            max-width: 400px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            max-width: 420px;
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.8);
         }
-        h1, h2 { margin-top: 0; color: #38bdf8; font-size: 20px; }
-        label { display: block; margin: 12px 0 6px; font-size: 14px; font-weight: bold; }
-        input[type="file"], input[type="range"] {
-            width: 100%;
-            margin-bottom: 10px;
+        h1 { margin: 0 0 4px; color: var(--primary); font-size: 22px; letter-spacing: 2px; text-transform: uppercase; }
+        .subtitle { font-size: 11px; color: #64748b; margin-bottom: 20px; letter-spacing: 1px; }
+        label { display: block; margin: 12px 0 6px; font-size: 13px; font-weight: 700; text-transform: uppercase; color: #94a3b8; }
+        input[type="text"], input[type="color"], select {
+            width: 100%; padding: 12px; background: #05070f; border: 1px solid var(--border);
+            border-radius: 6px; color: #fff; box-sizing: border-box; font-size: 14px;
         }
+        .search-group { display: flex; gap: 8px; }
+        .search-group button { width: auto; white-space: nowrap; }
         .canvas-container {
             background: #000;
             border-radius: 12px;
             overflow: hidden;
-            border: 2px solid #334155;
-            /* Scale down visually for desktop, but internal resolution remains 1080x1920 */
+            border: 2px solid var(--border);
             width: 360px; 
             height: 640px; 
             position: relative;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.15);
         }
-        canvas {
-            width: 100%;
-            height: 100%;
-        }
+        canvas { width: 100%; height: 100%; display: block; }
         button {
-            width: 100%; padding: 12px; margin-top: 10px;
-            background: var(--primary); color: white; border: none;
-            border-radius: 6px; font-weight: bold; cursor: pointer;
+            width: 100%; padding: 14px; margin-top: 12px;
+            background: linear-gradient(135deg, #00f0ff, #0072ff);
+            color: #000; border: none; border-radius: 6px; font-weight: 900;
+            letter-spacing: 1px; cursor: pointer; text-transform: uppercase;
+            transition: all 0.2s ease;
         }
-        button.record { background: #ef4444; }
-        button:disabled { background: #475569; cursor: not-allowed; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        button.record { background: linear-gradient(135deg, #ff0055, #ff0000); color: white; }
+        button:disabled { background: #334155; color: #64748b; cursor: not-allowed; transform: none; }
+        .file-inputs { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); }
     </style>
 </head>
 <body>
 
-    <div class="controls">
-        <h1>🎛️ AI Remixer & Visualizer</h1>
+    <div class="panel">
+        <h1>⚡ AURA ENGINE</h1>
+        <div class="subtitle">AUTOMATED VISUALIZER & SHORTS GENERATOR</div>
         
-        <label>1. Upload Background Image (1080x1920):</label>
-        <input type="file" id="imageInput" accept="image/*">
+        <label>1. Search Song Online:</label>
+        <div class="search-group">
+            <input type="text" id="songQuery" placeholder="e.g. Metamorphosis Phonk">
+            <button onclick="searchSong()">Search</button>
+        </div>
 
-        <label>2. Upload Original Song (.mp3, .wav):</label>
-        <input type="file" id="audioInput" accept="audio/*">
+        <div class="file-inputs">
+            <label>2. Main Theme Color:</label>
+            <input type="color" id="themeColor" value="#00f0ff">
 
-        <h2>Audio Effects (Phonk / Slowed Flip)</h2>
-        
-        <label>Playback Speed (Slowed & Reverb feel): <span id="speedVal">1.0</span>x</label>
-        <input type="range" id="speed" min="0.5" max="1.5" step="0.05" value="1.0">
+            <label>3. Upload Background Image (Wonder of U Vibe):</label>
+            <input type="file" id="bgInput" accept="image/*">
 
-        <label>Bass Boost (808 Punch): <span id="bassVal">0</span>dB</label>
-        <input type="range" id="bass" min="0" max="30" step="1" value="0">
+            <label>4. Upload Center Logo (Image 2 / V Badge):</label>
+            <input type="file" id="logoInput" accept="image/*">
 
-        <label>Distortion / Drive: <span id="driveVal">0</span></label>
-        <input type="range" id="drive" min="0" max="100" step="1" value="0">
+            <label>Or Local MP3 File:</label>
+            <input type="file" id="audioInput" accept="audio/*">
+        </div>
 
-        <button id="playBtn" disabled>▶️ Play Remixed Audio</button>
-        <button id="recordBtn" class="record" disabled>🔴 Start Video Recording</button>
-        <p id="status" style="font-size: 12px; color: #94a3b8; text-align: center;"></p>
+        <button id="playBtn" disabled>▶️ PLAY & PREVIEW</button>
+        <button id="recordBtn" class="record" disabled>🔴 RECORD SHORTS VIDEO (.WEBM)</button>
+        <div id="status" style="font-size: 11px; color: #00f0ff; margin-top: 10px; text-align: center;"></div>
     </div>
 
     <div class="canvas-container">
-        <!-- Strictly set to 1080x1920 resolution for output -->
+        <!-- Render resolution strictly set to 1080x1920 vertical -->
         <canvas id="visualizer" width="1080" height="1920"></canvas>
     </div>
 
     <script>
         const canvas = document.getElementById('visualizer');
         const ctx = canvas.getContext('2d');
-        let bgImage = new Image();
 
-        // Audio Context & Nodes
-        let audioCtx, source, analyser, bassFilter, distortion, mediaDest;
+        // Assets & State
+        let bgImg = new Image();
+        let logoImg = new Image();
+        let particles = [];
+        let themeColor = "#00f0ff";
+
+        // Web Audio
+        let audioCtx, source, analyser, bassFilter, mediaDest;
         let audioBuffer = null;
         let isPlaying = false;
-        
-        // Media Recorder
+        let audioUrl = null;
+
+        // Recording
         let mediaRecorder;
         let recordedChunks = [];
 
-        // UI Elements
-        const btnPlay = document.getElementById('playBtn');
-        const btnRecord = document.getElementById('recordBtn');
+        // UI
         const statusTxt = document.getElementById('status');
+        const playBtn = document.getElementById('playBtn');
+        const recordBtn = document.getElementById('recordBtn');
 
-        // Load Background Image
-        document.getElementById('imageInput').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const url = URL.createObjectURL(file);
-                bgImage.src = url;
-                bgImage.onload = () => drawFrame(); // Draw static background initially
-            }
+        // Init Particles
+        for(let i = 0; i < 70; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 4 + 1,
+                speedY: Math.random() * -3 - 1,
+                speedX: Math.random() * 2 - 1,
+                opacity: Math.random()
+            });
+        }
+
+        // Color Sync Listener
+        document.getElementById('themeColor').addEventListener('input', (e) => {
+            themeColor = e.target.value;
+            document.documentElement.style.setProperty('--primary', themeColor);
         });
 
-        // Load Audio File
+        // Image Loaders
+        document.getElementById('bgInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(file) bgImg.src = URL.createObjectURL(file);
+        });
+        document.getElementById('logoInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(file) logoImg.src = URL.createObjectURL(file);
+        });
+
+        // Online Song Search (iTunes Preview API - Zero Key Required)
+        async function searchSong() {
+            const query = document.getElementById('songQuery').value;
+            if(!query) return;
+            statusTxt.innerText = "Searching online audio...";
+
+            try {
+                const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=1`);
+                const data = await res.json();
+                
+                if(data.results.length === 0) {
+                    statusTxt.innerText = "No track found. Try local file upload.";
+                    return;
+                }
+
+                const track = data.results[0];
+                statusTxt.innerText = `Loaded: ${track.trackName} - ${track.artistName}`;
+                
+                // Fetch Audio Stream
+                const audioRes = await fetch(track.previewUrl);
+                const arrayBuffer = await audioRes.arrayBuffer();
+                
+                if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                
+                playBtn.disabled = false;
+            } catch(err) {
+                statusTxt.innerText = "Error fetching song: " + err.message;
+            }
+        }
+
+        // Local Audio Loader
         document.getElementById('audioInput').addEventListener('change', async (e) => {
             const file = e.target.files[0];
-            if (!file) return;
-            statusTxt.innerText = "Decoding audio... please wait.";
+            if(!file) return;
+            statusTxt.innerText = "Decoding local audio file...";
             
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const arrayBuffer = await file.arrayBuffer();
             audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
             
-            btnPlay.disabled = false;
-            statusTxt.innerText = "Audio loaded! Ready to play.";
+            playBtn.disabled = false;
+            statusTxt.innerText = "Local file loaded!";
         });
 
-        // Distortion Curve Generator (for that aggressive Phonk sound)
-        function makeDistortionCurve(amount) {
-            const k = typeof amount === 'number' ? amount : 50,
-                n_samples = 44100,
-                curve = new Float32Array(n_samples),
-                deg = Math.PI / 180;
-            for (let i = 0; i < n_samples; ++i) {
-                let x = i * 2 / n_samples - 1;
-                curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
-            }
-            return curve;
-        }
-
         // Setup Audio Pipeline
-        function setupAudioNodes() {
+        function setupAudio() {
             source = audioCtx.createBufferSource();
             source.buffer = audioBuffer;
-            source.playbackRate.value = document.getElementById('speed').value;
 
-            // Bass EQ
+            // Bass Boost Node
             bassFilter = audioCtx.createBiquadFilter();
             bassFilter.type = "lowshelf";
-            bassFilter.frequency.value = 150;
-            bassFilter.gain.value = document.getElementById('bass').value;
+            bassFilter.frequency.value = 120;
+            bassFilter.gain.value = 15;
 
-            // Distortion (Drive)
-            distortion = audioCtx.createWaveShaper();
-            distortion.curve = makeDistortionCurve(Number(document.getElementById('drive').value));
-            distortion.oversample = '4x';
-
-            // Visualizer Analyzer
             analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 256;
-            analyser.smoothingTimeConstant = 0.8;
+            analyser.fftSize = 128;
+            analyser.smoothingTimeConstant = 0.75;
 
-            // Media Destination for Recording
             mediaDest = audioCtx.createMediaStreamDestination();
 
-            // Connect Pipeline: Source -> Bass -> Distortion -> Analyzer
             source.connect(bassFilter);
-            bassFilter.connect(distortion);
-            distortion.connect(analyser);
-            
-            // Output to Speakers AND Recording Stream
+            bassFilter.connect(analyser);
             analyser.connect(audioCtx.destination);
             analyser.connect(mediaDest);
         }
 
-        // Real-time Sliders Update
-        ['speed', 'bass', 'drive'].forEach(id => {
-            document.getElementById(id).addEventListener('input', (e) => {
-                const val = parseFloat(e.target.value);
-                document.getElementById(id + 'Val').innerText = val;
-                if (!isPlaying) return;
-                
-                if (id === 'speed') source.playbackRate.value = val;
-                if (id === 'bass') bassFilter.gain.value = val;
-                if (id === 'drive') distortion.curve = makeDistortionCurve(val);
-            });
-        });
-
-        // Play / Stop Logic
-        btnPlay.addEventListener('click', () => {
+        // Play / Pause Logic
+        playBtn.addEventListener('click', () => {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            
+
             if (isPlaying) {
                 source.stop();
                 isPlaying = false;
-                btnPlay.innerText = "▶️ Play Remixed Audio";
-                btnRecord.disabled = true;
+                playBtn.innerText = "▶️ PLAY & PREVIEW";
+                recordBtn.disabled = true;
             } else {
-                setupAudioNodes();
+                setupAudio();
                 source.start(0);
                 isPlaying = true;
-                btnPlay.innerText = "⏸️ Stop Audio";
-                btnRecord.disabled = false;
-                drawFrame(); // Start visualization loop
+                playBtn.innerText = "⏸️ STOP AUDIO";
+                recordBtn.disabled = false;
+                renderFrame();
             }
         });
 
-        // Visualization Render Loop
-        function drawFrame() {
-            if (!isPlaying && !bgImage.src) return;
-            requestAnimationFrame(drawFrame);
-
-            // Draw Background
-            if (bgImage.src) {
-                ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
-            } else {
-                ctx.fillStyle = "#000";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-
+        // Main Visualizer Render Loop
+        function renderFrame() {
             if (!isPlaying) return;
+            requestAnimationFrame(renderFrame);
 
             // Get Frequency Data
             const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
             analyser.getByteFrequencyData(dataArray);
 
-            // Draw Spectrum Bars overlay
-            const barWidth = (canvas.width / bufferLength) * 2.5;
-            let barHeight;
-            let x = 0;
+            // Calculate Bass Kick Intensity (Low bins 0 to 6)
+            let bassSum = 0;
+            for(let i = 0; i < 6; i++) bassSum += dataArray[i];
+            let bassIntensity = bassSum / 6; // 0 to 255
+            let kick = bassIntensity > 180 ? (bassIntensity - 180) / 75 : 0; // 0.0 to 1.0
 
-            for(let i = 0; i < bufferLength; i++) {
-                barHeight = dataArray[i] * 3; // Scale height for 1920px canvas
+            // 1. Camera Shake Effect
+            ctx.save();
+            let shakeX = (Math.random() - 0.5) * kick * 35;
+            let shakeY = (Math.random() - 0.5) * kick * 35;
+            ctx.translate(shakeX, shakeY);
 
-                // Neon Purple/Pink Gradient
-                const gradient = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
-                gradient.addColorStop(0, "rgba(168, 85, 247, 0.8)"); // Purple
-                gradient.addColorStop(1, "rgba(236, 72, 153, 0.8)"); // Pink
-                
-                ctx.fillStyle = gradient;
-                
-                // Draw mirrored bars from center-bottom
-                ctx.fillRect(
-                    (canvas.width / 2) + x, 
-                    canvas.height - barHeight - 100, 
-                    barWidth, 
-                    barHeight
-                );
-                ctx.fillRect(
-                    (canvas.width / 2) - x - barWidth, 
-                    canvas.height - barHeight - 100, 
-                    barWidth, 
-                    barHeight
-                );
-
-                x += barWidth + 4;
+            // 2. Background Drawing (Cover Fit Without Distortion)
+            if (bgImg.src && bgImg.complete) {
+                let scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
+                let x = (canvas.width / 2) - (bgImg.width / 2) * scale;
+                let y = (canvas.height / 2) - (bgImg.height / 2) * scale;
+                ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
+            } else {
+                ctx.fillStyle = "#05070f";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
+
+            // 3. Color Tint Overlay
+            ctx.fillStyle = themeColor;
+            ctx.globalCompositeOperation = "color";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = "source-over";
+
+            // 4. Strobe / Flicker Effect on Bass Drop
+            if(kick > 0.4) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${kick * 0.25})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // 5. Particles Engine
+            ctx.fillStyle = themeColor;
+            for(let p of particles) {
+                p.y += p.speedY - (kick * 3);
+                p.x += p.speedX;
+                if(p.y < 0) p.y = canvas.height;
+                if(p.x < 0 || p.x > canvas.width) p.x = Math.random() * canvas.width;
+
+                ctx.globalAlpha = p.opacity;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size + (kick * 2), 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1.0;
+
+            // 6. Circular Spectrum Center Math
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const baseRadius = 220 + (kick * 40); // Pulsing base circle
+
+            // Black Inner Ring Background
+            ctx.beginPath();
+            ctx.arc(cx, cy, baseRadius, 0, Math.PI * 2);
+            ctx.fillStyle = "#000000";
+            ctx.shadowBlur = 40 + (kick * 50);
+            ctx.shadowColor = themeColor;
+            ctx.fill();
+            ctx.shadowBlur = 0; // reset glow
+
+            // Outer Glow Layer
+            ctx.strokeStyle = themeColor;
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            // 7. Circular Audio Spectrum Bars
+            const numBars = 64;
+            const step = (Math.PI * 2) / numBars;
+
+            for (let i = 0; i < numBars; i++) {
+                let val = dataArray[i % bufferLength];
+                let barHeight = (val / 255) * 200 * (1 + kick);
+
+                let angle = i * step;
+                let x1 = cx + Math.cos(angle) * baseRadius;
+                let y1 = cy + Math.sin(angle) * baseRadius;
+                let x2 = cx + Math.cos(angle) * (baseRadius + barHeight);
+                let y2 = cy + Math.sin(angle) * (baseRadius + barHeight);
+
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = themeColor;
+                ctx.lineWidth = 8;
+                ctx.lineCap = "round";
+                ctx.stroke();
+            }
+
+            // 8. Draw Center Logo (Image 2 / V Badge)
+            if (logoImg.src && logoImg.complete) {
+                let logoSize = (baseRadius * 1.4);
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(cx, cy, baseRadius - 10, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.drawImage(logoImg, cx - logoSize/2, cy - logoSize/2, logoSize, logoSize);
+                ctx.restore();
+            }
+
+            ctx.restore(); // Restore camera shake matrix
         }
 
-        // Recording Logic (Canvas + Web Audio)
-        btnRecord.addEventListener('click', () => {
+        // Recording Functionality
+        recordBtn.addEventListener('click', () => {
             if (mediaRecorder && mediaRecorder.state === 'recording') {
                 mediaRecorder.stop();
-                btnRecord.innerText = "🔴 Start Video Recording";
-                btnRecord.style.background = "#ef4444";
-                statusTxt.innerText = "Processing video file...";
+                recordBtn.innerText = "🔴 RECORD SHORTS VIDEO (.WEBM)";
+                statusTxt.innerText = "Encoding video file...";
                 return;
             }
 
-            // Combine Canvas Video Stream and Audio Stream
-            const canvasStream = canvas.captureStream(30); // 30 FPS
-            const audioStream = mediaDest.stream; //
+            const canvasStream = canvas.captureStream(30);
             const combinedStream = new MediaStream([
                 ...canvasStream.getVideoTracks(), 
-                ...audioStream.getAudioTracks()
+                ...mediaDest.stream.getAudioTracks()
             ]);
 
-            mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' }); //
-            
+            mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
+            recordedChunks = [];
+
             mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) recordedChunks.push(e.data); //
+                if (e.data.size > 0) recordedChunks.push(e.data);
             };
 
             mediaRecorder.onstop = () => {
-                const blob = new Blob(recordedChunks, { type: 'video/webm' }); //
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a'); //
+                const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                a.download = `Phonk_Remix_${Date.now()}.webm`; //
+                a.download = `AURA_SHORTS_${Date.now()}.webm`;
                 a.click();
-                URL.revokeObjectURL(url); //
-                recordedChunks = [];
-                statusTxt.innerText = "Video Downloaded Successfully!";
+                URL.revokeObjectURL(url);
+                statusTxt.innerText = "Aura Shorts Video Exported!";
             };
 
-            mediaRecorder.start(); //
-            btnRecord.innerText = "⏹️ Stop & Save Video";
-            btnRecord.style.background = "#eab308";
-            statusTxt.innerText = "Recording... Play around with the audio effects!";
+            mediaRecorder.start();
+            recordBtn.innerText = "⏹️ STOP & SAVE SHORTS VIDEO";
+            statusTxt.innerText = "Recording video in high-quality 1080x1920...";
         });
     </script>
 </body>
