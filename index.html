@@ -3,73 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puter AI Shorts Generator</title>
-    <!-- Puter.js CDN -->
+    <title>Viral Meme Script & Voice Engine</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 650px; margin: 40px auto; padding: 20px; line-height: 1.6; background-color: #f9f9f9; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        button { padding: 12px 20px; font-size: 16px; font-weight: bold; cursor: pointer; background: #0070f3; color: white; border: none; border-radius: 6px; width: 100%; transition: 0.2s; }
-        button:disabled { background: #94a3b8; cursor: not-allowed; }
-        textarea, input { width: 100%; padding: 10px; margin: 8px 0 16px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        textarea { height: 100px; resize: vertical; }
+        body { font-family: 'Inter', sans-serif; max-width: 700px; margin: 30px auto; padding: 20px; background-color: #0f172a; color: #f8fafc; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
+        button { padding: 14px; font-size: 16px; font-weight: bold; cursor: pointer; background: #3b82f6; color: white; border: none; border-radius: 8px; width: 100%; transition: 0.2s; }
+        button:hover { background: #2563eb; }
+        button:disabled { background: #64748b; cursor: not-allowed; }
+        textarea, select, input { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid #475569; border-radius: 8px; background: #0f172a; color: #fff; box-sizing: border-box; font-size: 14px; }
+        textarea { height: 110px; resize: vertical; }
+        .row { display: flex; gap: 10px; }
         audio { width: 100%; margin-top: 10px; }
+        .tag { background: #334155; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #38bdf8; }
     </style>
 </head>
 <body>
 
-    <h2>🎬 Puter AI - Script & Voice Engine</h2>
+    <h2>🚀 Viral Meme Script & Pitch-Shifted Voice Engine</h2>
 
     <div class="card">
-        <label for="topic"><strong>1. Enter Short Topic or Joke Idea:</strong></label>
-        <input type="text" id="topic" value="Studying for exams at 2 AM on red bull">
+        <label for="topic"><strong>1. Video Concept / Joke Topic:</strong></label>
+        <input type="text" id="topic" value="Teacher catching a student using ChatGPT during O/L exam">
 
-        <button id="generateBtn" onclick="runPipeline()">⚡ Generate Script & ElevenLabs Voice</button>
+        <div class="row">
+            <div style="flex: 1;">
+                <label for="voiceSelect"><strong>2. Pick Funny Voice:</strong></label>
+                <select id="voiceSelect">
+                    <option value="JBFqnCBsd6RMkjVDRZzb">George (Expressive & Panicked)</option>
+                    <option value="cgSgspJ2msm6clMCkdW9">Jessica (High Energy Sarcastic)</option>
+                    <option value="21m00Tcm4TlvDq8ikWAM">Rachel (Calm Meme Narrator)</option>
+                    <option value="pNInz6obpgDQGcFmaJgB">Adam (Classic Deep Meme Voice)</option>
+                </select>
+            </div>
+            <div style="flex: 1;">
+                <label for="speedRate"><strong>3. Speed / Pitch Effect:</strong></label>
+                <select id="speedRate">
+                    <option value="1.25">1.25x (Fast Cartoon / Funny)</option>
+                    <option value="1.4">1.4x (Chipmunk / Ultra Energetic)</option>
+                    <option value="1.0">1.0x (Normal Speed)</option>
+                </select>
+            </div>
+        </div>
+
+        <button id="generateBtn" onclick="runPipeline()">🔥 Generate Hilarious Voiceover</button>
     </div>
 
     <div class="card">
-        <label for="scriptOutput"><strong>2. Generated Script (GPT-4o):</strong></label>
+        <label for="scriptOutput"><strong>4. Generated Script (GPT-4o Script):</strong></label>
+        <p><span class="tag">Tip: Edit text directly below if you want to tweak the joke!</span></p>
         <textarea id="scriptOutput" placeholder="Your script will show here..."></textarea>
     </div>
 
     <div class="card">
-        <label><strong>3. Audio Preview (ElevenLabs):</strong></label>
-        <div id="audioPlayer">Audio will load here...</div>
+        <label><strong>5. Funny Voice Output (ElevenLabs):</strong></label>
+        <div id="audioPlayer">Audio preview will render here...</div>
     </div>
 
     <script>
         async function runPipeline() {
             const topic = document.getElementById('topic').value;
+            const voiceId = document.getElementById('voiceSelect').value;
+            const speed = parseFloat(document.getElementById('speedRate').value);
             const btn = document.getElementById('generateBtn');
             const scriptBox = document.getElementById('scriptOutput');
             const audioPlayer = document.getElementById('audioPlayer');
 
             btn.disabled = true;
-            btn.innerText = "Generating Script (GPT-4o)...";
+            btn.innerText = "Writing Meme Script...";
 
             try {
-                // Step 1: Generate Script with GPT-4o
-                const prompt = `Write a hilarious, 15-second relatable short dialogue or monologue about "${topic}" for a 2D animated meme video. Keep it ultra-short (under 30 words), funny, and energetic. Output ONLY the spoken words with no stage directions or quotes.`;
+                // Step A: Generate script with GPT-4o optimized for fast-paced viral comedy
+                const prompt = `Write an ultra-short (10 to 15 seconds max, under 25 words) hilarious meme script about: "${topic}". 
+                Style: Panicked, fast-paced, high emotion, similar to short 2D viral animation memes. 
+                Output ONLY the plain text spoken lines. No stage directions, no quotes.`;
                 
                 const chatResponse = await puter.ai.chat(prompt, { model: "openai/gpt-4o" });
                 const scriptText = chatResponse.message.content.trim();
                 scriptBox.value = scriptText;
 
-                btn.innerText = "Generating ElevenLabs Voiceover...";
+                btn.innerText = "Generating Funny Voiceover...";
 
-                // Step 2: Convert Script to Audio via ElevenLabs using Puter.js
+                // Step B: Text-to-Speech via ElevenLabs
                 const audio = await puter.ai.txt2speech(scriptText, {
                     provider: "elevenlabs",
-                    voice: "21m00Tcm4TlvDq8ikWAM", // Rachel / default sample voice
+                    voice: voiceId,
                     model: "eleven_multilingual_v2"
                 });
 
-                // Display audio element with playback controls
+                // Apply funny speed / pitch shift effect
+                audio.playbackRate = speed;
+
+                // Step C: Display controls and play
                 audioPlayer.innerHTML = '';
                 audio.controls = true;
                 audioPlayer.appendChild(audio);
                 
-                // Play automatically
                 audio.play();
 
             } catch (error) {
@@ -77,7 +106,7 @@
                 alert("Error: " + error.message);
             } finally {
                 btn.disabled = false;
-                btn.innerText = "⚡ Generate Script & ElevenLabs Voice";
+                btn.innerText = "🔥 Generate Hilarious Voiceover";
             }
         }
     </script>
