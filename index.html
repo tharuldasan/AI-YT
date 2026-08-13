@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA // AUTOMATED SHORTS ENGINE</title>
+    <title>AURA // V2 AUTOMATED SHORTS ENGINE</title>
     <style>
         :root {
             --bg: #05070f;
@@ -39,6 +39,7 @@
             width: 100%; padding: 12px; background: #05070f; border: 1px solid var(--border);
             border-radius: 6px; color: #fff; box-sizing: border-box; font-size: 14px;
         }
+        input[type="range"] { width: 100%; margin-bottom: 5px; }
         .search-group { display: flex; gap: 8px; }
         .search-group button { width: auto; white-space: nowrap; }
         .canvas-container {
@@ -54,7 +55,7 @@
         canvas { width: 100%; height: 100%; display: block; }
         button {
             width: 100%; padding: 14px; margin-top: 12px;
-            background: linear-gradient(135deg, #00f0ff, #0072ff);
+            background: linear-gradient(135deg, var(--primary), #0072ff);
             color: #000; border: none; border-radius: 6px; font-weight: 900;
             letter-spacing: 1px; cursor: pointer; text-transform: uppercase;
             transition: all 0.2s ease;
@@ -63,15 +64,16 @@
         button.record { background: linear-gradient(135deg, #ff0055, #ff0000); color: white; }
         button:disabled { background: #334155; color: #64748b; cursor: not-allowed; transform: none; }
         .file-inputs { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); }
+        .value-display { font-size: 12px; color: var(--primary); float: right; }
     </style>
 </head>
 <body>
 
     <div class="panel">
-        <h1>⚡ AURA ENGINE</h1>
+        <h1>⚡ AURA ENGINE V2</h1>
         <div class="subtitle">AUTOMATED VISUALIZER & SHORTS GENERATOR</div>
         
-        <label>1. Search Song Online:</label>
+        <label>1. Search Song Online (Auto-Fetches Official BG):</label>
         <div class="search-group">
             <input type="text" id="songQuery" placeholder="e.g. Metamorphosis Phonk">
             <button onclick="searchSong()">Search</button>
@@ -80,11 +82,17 @@
         <div class="file-inputs">
             <label>2. Main Theme Color:</label>
             <input type="color" id="themeColor" value="#00f0ff">
+            
+            <label>Playback Speed (Slowed): <span class="value-display" id="speedVal">1.0x</span></label>
+            <input type="range" id="speedSlider" min="0.5" max="1.5" step="0.05" value="1.0">
+            
+            <label>Center Logo Size: <span class="value-display" id="logoSizeVal">240px</span></label>
+            <input type="range" id="logoSizeSlider" min="150" max="450" step="10" value="240">
 
-            <label>3. Upload Background Image (Wonder of U Vibe):</label>
+            <label>Optional: Upload Custom BG (Overrides Official):</label>
             <input type="file" id="bgInput" accept="image/*">
-
-            <label>4. Upload Center Logo (Image 2 / V Badge):</label>
+            
+            <label>Optional: Upload Custom Logo (Overrides logo.png):</label>
             <input type="file" id="logoInput" accept="image/*">
 
             <label>Or Local MP3 File:</label>
@@ -108,40 +116,55 @@
         // Assets & State
         let bgImg = new Image();
         let logoImg = new Image();
+        logoImg.src = 'logo.png'; // Automatically looks for logo.png in the same folder
+        
         let particles = [];
         let themeColor = "#00f0ff";
+        let logoBaseSize = 240;
 
         // Web Audio
-        let audioCtx, source, analyser, bassFilter, mediaDest;
+        let audioCtx, source, analyser, gainNode, mediaDest;
         let audioBuffer = null;
         let isPlaying = false;
-        let audioUrl = null;
+        let startTime = 0;
 
         // Recording
         let mediaRecorder;
         let recordedChunks = [];
 
-        // UI
+        // UI Elements
         const statusTxt = document.getElementById('status');
         const playBtn = document.getElementById('playBtn');
         const recordBtn = document.getElementById('recordBtn');
+        const speedSlider = document.getElementById('speedSlider');
+        const logoSizeSlider = document.getElementById('logoSizeSlider');
 
-        // Init Particles
+        // Init Particles (Bigger size per your request)
         for(let i = 0; i < 70; i++) {
             particles.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
-                size: Math.random() * 4 + 1,
-                speedY: Math.random() * -3 - 1,
+                size: Math.random() * 8 + 3, // Increased size
+                speedY: Math.random() * -3 - 1.5,
                 speedX: Math.random() * 2 - 1,
                 opacity: Math.random()
             });
         }
 
-        // Color Sync Listener
+        // Event Listeners for UI
         document.getElementById('themeColor').addEventListener('input', (e) => {
             themeColor = e.target.value;
             document.documentElement.style.setProperty('--primary', themeColor);
+        });
+        
+        speedSlider.addEventListener('input', (e) => {
+            document.getElementById('speedVal').innerText = e.target.value + 'x';
+            if (source) source.playbackRate.value = e.target.value;
+        });
+
+        logoSizeSlider.addEventListener('input', (e) => {
+            logoBaseSize = parseInt(e.target.value);
+            document.getElementById('logoSizeVal').innerText = logoBaseSize + 'px';
         });
 
         // Image Loaders
@@ -172,6 +195,12 @@
                 const track = data.results[0];
                 statusTxt.innerText = `Loaded: ${track.trackName} - ${track.artistName}`;
                 
+                // Fetch Official High-Res Background Image (1000x1000)
+                if(!document.getElementById('bgInput').files.length) {
+                    const highResArt = track.artworkUrl100.replace('100x100bb', '1000x1000bb');
+                    bgImg.src = highResArt;
+                }
+
                 // Fetch Audio Stream
                 const audioRes = await fetch(track.previewUrl);
                 const arrayBuffer = await audioRes.arrayBuffer();
@@ -199,25 +228,24 @@
             statusTxt.innerText = "Local file loaded!";
         });
 
-        // Setup Audio Pipeline
+        // Setup Audio Pipeline (No Bass Boost, just original audio + fades)
         function setupAudio() {
             source = audioCtx.createBufferSource();
             source.buffer = audioBuffer;
+            source.playbackRate.value = speedSlider.value;
 
-            // Bass Boost Node
-            bassFilter = audioCtx.createBiquadFilter();
-            bassFilter.type = "lowshelf";
-            bassFilter.frequency.value = 120;
-            bassFilter.gain.value = 15;
+            gainNode = audioCtx.createGain(); // Controls volume for fade in/out
+            gainNode.gain.value = 0; // Start at 0 for fade in
 
             analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 128;
-            analyser.smoothingTimeConstant = 0.75;
+            analyser.fftSize = 256; 
+            analyser.smoothingTimeConstant = 0.85; // Extra smooth for curved spectrum
 
             mediaDest = audioCtx.createMediaStreamDestination();
 
-            source.connect(bassFilter);
-            bassFilter.connect(analyser);
+            // source -> gain (fade) -> analyser -> destination
+            source.connect(gainNode);
+            gainNode.connect(analyser);
             analyser.connect(audioCtx.destination);
             analyser.connect(mediaDest);
         }
@@ -234,6 +262,7 @@
             } else {
                 setupAudio();
                 source.start(0);
+                startTime = audioCtx.currentTime;
                 isPlaying = true;
                 playBtn.innerText = "⏸️ STOP AUDIO";
                 recordBtn.disabled = false;
@@ -246,24 +275,50 @@
             if (!isPlaying) return;
             requestAnimationFrame(renderFrame);
 
+            // Handle Global Fades (Visual and Audio Sync)
+            let elapsed = audioCtx.currentTime - startTime;
+            let currentSpeed = parseFloat(speedSlider.value);
+            let actualDuration = audioBuffer.duration / currentSpeed;
+            
+            let fadeAlpha = 1;
+            if (elapsed < 2) fadeAlpha = elapsed / 2; // 2 sec fade in
+            else if (actualDuration - elapsed < 2) fadeAlpha = Math.max(0, (actualDuration - elapsed) / 2); // 2 sec fade out
+            
+            // Apply Fade to Audio
+            if (gainNode) gainNode.gain.value = fadeAlpha;
+            
+            // Stop logic when track ends
+            if (elapsed >= actualDuration) {
+                isPlaying = false;
+                playBtn.innerText = "▶️ PLAY & PREVIEW";
+                if(mediaRecorder && mediaRecorder.state === 'recording') recordBtn.click(); // Auto-stop recording
+                return;
+            }
+
             // Get Frequency Data
             const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
             analyser.getByteFrequencyData(dataArray);
 
-            // Calculate Bass Kick Intensity (Low bins 0 to 6)
+            // Calculate Bass Kick Intensity
             let bassSum = 0;
-            for(let i = 0; i < 6; i++) bassSum += dataArray[i];
-            let bassIntensity = bassSum / 6; // 0 to 255
-            let kick = bassIntensity > 180 ? (bassIntensity - 180) / 75 : 0; // 0.0 to 1.0
+            for(let i = 0; i < 5; i++) bassSum += dataArray[i];
+            let bassIntensity = bassSum / 5; 
+            let kick = bassIntensity > 200 ? (bassIntensity - 200) / 55 : 0; 
+
+            // Clear Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Apply Visual Fade (Global Alpha)
+            ctx.globalAlpha = fadeAlpha;
 
             // 1. Camera Shake Effect
             ctx.save();
-            let shakeX = (Math.random() - 0.5) * kick * 35;
-            let shakeY = (Math.random() - 0.5) * kick * 35;
+            let shakeX = (Math.random() - 0.5) * kick * 20;
+            let shakeY = (Math.random() - 0.5) * kick * 20;
             ctx.translate(shakeX, shakeY);
 
-            // 2. Background Drawing (Cover Fit Without Distortion)
+            // 2. Background Drawing (Perfect Fit/Cover)
             if (bgImg.src && bgImg.complete) {
                 let scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
                 let x = (canvas.width / 2) - (bgImg.width / 2) * scale;
@@ -274,83 +329,84 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // 3. Color Tint Overlay
+            // 3. Color Tint Overlay (No white flashes anymore)
             ctx.fillStyle = themeColor;
             ctx.globalCompositeOperation = "color";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.globalCompositeOperation = "source-over";
 
-            // 4. Strobe / Flicker Effect on Bass Drop
-            if(kick > 0.4) {
-                ctx.fillStyle = `rgba(255, 255, 255, ${kick * 0.25})`;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-
-            // 5. Particles Engine
+            // 4. Particles Engine (Bigger, flowing upward)
             ctx.fillStyle = themeColor;
             for(let p of particles) {
                 p.y += p.speedY - (kick * 3);
                 p.x += p.speedX;
-                if(p.y < 0) p.y = canvas.height;
+                if(p.y < 0) p.y = canvas.height + p.size;
                 if(p.x < 0 || p.x > canvas.width) p.x = Math.random() * canvas.width;
 
-                ctx.globalAlpha = p.opacity;
+                ctx.globalAlpha = p.opacity * fadeAlpha;
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size + (kick * 2), 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, p.size + (kick * 3), 0, Math.PI * 2);
                 ctx.fill();
             }
-            ctx.globalAlpha = 1.0;
+            ctx.globalAlpha = fadeAlpha; // Reset alpha to just the fade
 
-            // 6. Circular Spectrum Center Math
+            // 5. Setup Center Specs
             const cx = canvas.width / 2;
             const cy = canvas.height / 2;
-            const baseRadius = 220 + (kick * 40); // Pulsing base circle
+            const currentRadius = logoBaseSize + (kick * 25);
 
-            // Black Inner Ring Background
+            // 6. Highly Effective Curved Symmetrical Spectrum (Trap Nation / Vizzy Style)
+            let numBars = 55; // Number of points per side
             ctx.beginPath();
-            ctx.arc(cx, cy, baseRadius, 0, Math.PI * 2);
-            ctx.fillStyle = "#000000";
-            ctx.shadowBlur = 40 + (kick * 50);
+            
+            // Right side of the spectrum (Top to Bottom)
+            for (let i = 0; i <= numBars; i++) {
+                let val = dataArray[i]; 
+                let height = (val / 255) * 160 * (1 + kick * 0.3);
+                let r = currentRadius + height;
+                let angle = (i / numBars) * Math.PI - Math.PI / 2; // -90 to +90 degrees
+                
+                let px = cx + Math.cos(angle) * r;
+                let py = cy + Math.sin(angle) * r;
+                if(i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+
+            // Left side of the spectrum (Bottom back to Top)
+            for (let i = numBars; i >= 0; i--) {
+                let val = dataArray[i];
+                let height = (val / 255) * 160 * (1 + kick * 0.3);
+                let r = currentRadius + height;
+                let angle = Math.PI / 2 + ((numBars - i) / numBars) * Math.PI; // +90 to +270 degrees
+                
+                let px = cx + Math.cos(angle) * r;
+                let py = cy + Math.sin(angle) * r;
+                ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            
+            // Draw Spectrum Fill with Effects
+            ctx.fillStyle = themeColor;
+            ctx.shadowBlur = 40 + (kick * 40);
             ctx.shadowColor = themeColor;
             ctx.fill();
             ctx.shadowBlur = 0; // reset glow
 
-            // Outer Glow Layer
-            ctx.strokeStyle = themeColor;
-            ctx.lineWidth = 6;
-            ctx.stroke();
-
-            // 7. Circular Audio Spectrum Bars
-            const numBars = 64;
-            const step = (Math.PI * 2) / numBars;
-
-            for (let i = 0; i < numBars; i++) {
-                let val = dataArray[i % bufferLength];
-                let barHeight = (val / 255) * 200 * (1 + kick);
-
-                let angle = i * step;
-                let x1 = cx + Math.cos(angle) * baseRadius;
-                let y1 = cy + Math.sin(angle) * baseRadius;
-                let x2 = cx + Math.cos(angle) * (baseRadius + barHeight);
-                let y2 = cy + Math.sin(angle) * (baseRadius + barHeight);
-
-                ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
-                ctx.strokeStyle = themeColor;
-                ctx.lineWidth = 8;
-                ctx.lineCap = "round";
-                ctx.stroke();
-            }
-
-            // 8. Draw Center Logo (Image 2 / V Badge)
-            if (logoImg.src && logoImg.complete) {
-                let logoSize = (baseRadius * 1.4);
+            // 7. Black Inner Ring Background (Masks the inside of the spectrum)
+            ctx.beginPath();
+            ctx.arc(cx, cy, currentRadius, 0, Math.PI * 2);
+            ctx.fillStyle = "#000000";
+            ctx.fill();
+            
+            // 8. Draw Center Logo (Scaled by UI Slider)
+            if (logoImg.src && logoImg.complete && logoImg.naturalWidth !== 0) {
+                // Ensure logo scales correctly within the radius bounds
+                let logoDrawSize = currentRadius * 1.6; 
                 ctx.save();
                 ctx.beginPath();
-                ctx.arc(cx, cy, baseRadius - 10, 0, Math.PI * 2);
+                ctx.arc(cx, cy, currentRadius - 4, 0, Math.PI * 2); // Clip to inner circle
                 ctx.clip();
-                ctx.drawImage(logoImg, cx - logoSize/2, cy - logoSize/2, logoSize, logoSize);
+                ctx.drawImage(logoImg, cx - logoDrawSize/2, cy - logoDrawSize/2, logoDrawSize, logoDrawSize);
                 ctx.restore();
             }
 
