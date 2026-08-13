@@ -32,7 +32,7 @@
             flex-direction: column;
             align-items: center;
             gap: 12px;
-            background: rgba(10, 10, 20, 0.6);
+            background: rgba(10, 10, 20, 0.75);
             padding: 20px 30px;
             border-radius: 16px;
             backdrop-filter: blur(12px);
@@ -41,15 +41,17 @@
         }
         .controls {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
         }
-        button {
+        button, label.file-btn {
             background: linear-gradient(135deg, #00f0ff, #7000ff);
             border: none;
             color: white;
-            padding: 12px 28px;
-            font-size: 14px;
+            padding: 12px 24px;
+            font-size: 13px;
             font-weight: 800;
             letter-spacing: 1.5px;
             border-radius: 8px;
@@ -57,11 +59,13 @@
             text-transform: uppercase;
             transition: all 0.3s ease;
             box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+            display: inline-block;
         }
-        button:hover {
+        button:hover, label.file-btn:hover {
             transform: scale(1.05);
             box-shadow: 0 0 30px rgba(112, 0, 255, 0.8);
         }
+        input[type="file"] { display: none; }
         .info {
             font-size: 12px;
             color: #a0a0c0;
@@ -69,9 +73,7 @@
             text-transform: uppercase;
         }
     </style>
-    <!-- Three.js Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- GSAP for Smooth Motion Interpolation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
 <body>
@@ -79,9 +81,13 @@
     <div id="canvas-container"></div>
 
     <div class="ui-overlay">
-        <div class="info" id="track-info">AURA // HYPER-SMOOTH WEBGL SPECTRUM</div>
+        <div class="info" id="track-info">AURA // 3D WEBGL SPECTRUM</div>
         <div class="controls">
-            <button id="playBtn">▶ PLAY TRACK</button>
+            <label class="file-btn">
+                📁 LOAD LOCAL MP3
+                <input type="file" id="audioInput" accept="audio/*">
+            </label>
+            <button id="playBtn">▶ PLAY PREVIEW</button>
         </div>
     </div>
 
@@ -103,16 +109,17 @@
         let audioCtx, analyser, dataArray, source;
         let isPlaying = false;
 
-        // Sample Track (Royalty-free Phonk / Cyberpunk Stream)
         const audio = new Audio();
         audio.crossOrigin = "anonymous";
-        audio.src = "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=montagem-pr-funk-110191.mp3";
+        // Reliable fallback audio stream
+        audio.src = "https://actions.google.com/sounds/v1/science_fiction/electronic_circuit_loop.ogg";
 
         function initAudio() {
+            if (audioCtx) return;
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioCtx.createAnalyser();
             analyser.fftSize = 512;
-            analyser.smoothingTimeConstant = 0.82; // Balanced smoothing
+            analyser.smoothingTimeConstant = 0.82;
 
             source = audioCtx.createMediaElementSource(audio);
             source.connect(analyser);
@@ -121,33 +128,23 @@
             dataArray = new Uint8Array(analyser.frequencyBinCount);
         }
 
-        // --- 3. SPECTRUM MESH CREATION (CURVED SPLINE SHAPE) ---
-        const BARS_COUNT = 120; // High resolution points
+        // --- 3. SPECTRUM MESH CREATION ---
+        const BARS_COUNT = 120;
         const RADIUS = 5.5;
         const barsGroup = new THREE.Group();
         scene.add(barsGroup);
 
-        // Individual instanced bars forming a 3D glowing ring
         const barGeometry = new THREE.BoxGeometry(0.08, 1, 0.08);
-        const barMaterials = [];
         const barMeshes = [];
 
         for (let i = 0; i < BARS_COUNT; i++) {
             const angle = (i / BARS_COUNT) * Math.PI * 2;
-            
-            // Dynamic Color Gradient (Cyan to Purple/Magenta)
-            const hue = (i / BARS_COUNT) * 0.4 + 0.5; // range 0.5 (cyan) to 0.9 (magenta)
+            const hue = (i / BARS_COUNT) * 0.4 + 0.5;
             const color = new THREE.Color().setHSL(hue, 1.0, 0.5);
 
-            const mat = new THREE.MeshBasicMaterial({
-                color: color,
-                wireframe: false
-            });
-            barMaterials.push(mat);
-
+            const mat = new THREE.MeshBasicMaterial({ color: color });
             const mesh = new THREE.Mesh(barGeometry, mat);
             
-            // Position around circle
             mesh.position.x = Math.cos(angle) * RADIUS;
             mesh.position.y = Math.sin(angle) * RADIUS;
             mesh.rotation.z = angle - Math.PI / 2;
@@ -156,22 +153,22 @@
             barMeshes.push(mesh);
         }
 
-        // Center Black Core (To mask the inside cleanly)
+        // Center Black Core
         const coreGeo = new THREE.CircleGeometry(RADIUS - 0.1, 64);
         const coreMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
         const coreMesh = new THREE.Mesh(coreGeo, coreMat);
         coreMesh.position.z = -0.1;
         barsGroup.add(coreMesh);
 
-        // Center Outer Glow Ring
+        // Outer Ring
         const ringGeo = new THREE.RingGeometry(RADIUS - 0.05, RADIUS + 0.05, 64);
         const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide });
         const ringMesh = new THREE.Mesh(ringGeo, ringMat);
         ringMesh.position.z = 0.05;
         barsGroup.add(ringMesh);
 
-        // --- 4. FLOATING 3D PARTICLE FIELD ---
-        const particleCount = 600;
+        // --- 4. PARTICLES ---
+        const particleCount = 500;
         const particleGeo = new THREE.BufferGeometry();
         const particlePositions = new Float32Array(particleCount * 3);
 
@@ -183,64 +180,47 @@
 
         particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
         const particleMat = new THREE.PointsMaterial({
-            color: 0x00f0ff,
-            size: 0.1,
-            transparent: true,
-            opacity: 0.6
+            color: 0x00f0ff, size: 0.1, transparent: true, opacity: 0.6
         });
         const particleSystem = new THREE.Points(particleGeo, particleMat);
         scene.add(particleSystem);
 
-        // --- 5. RENDER LOOP & AUDIO ANIMATION ---
+        // --- 5. RENDER LOOP ---
         let clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
             const time = clock.getElapsedTime();
-
             let bassKick = 0;
 
             if (isPlaying && analyser) {
                 analyser.getByteFrequencyData(dataArray);
 
-                // Calculate Bass Energy (low frequency bins 0 to 6)
                 let bassSum = 0;
                 for (let i = 0; i < 6; i++) bassSum += dataArray[i];
-                bassKick = bassSum / 6 / 255; // Normalized 0.0 -> 1.0
+                bassKick = bassSum / 6 / 255;
 
-                // Update Spectrum Bars Symmetrically
                 const halfCount = BARS_COUNT / 2;
-                
                 for (let i = 0; i < halfCount; i++) {
-                    // Mirror mapping
                     const rawVal = dataArray[i % 64]; 
-                    const height = (rawVal / 255) * 7 + 0.1; // Scale bar height
+                    const height = (rawVal / 255) * 7 + 0.1;
 
-                    // Right Side
-                    const meshRight = barMeshes[i];
-                    gsap.to(meshRight.scale, { y: height, duration: 0.05 });
-
-                    // Left Side (Mirror)
-                    const meshLeft = barMeshes[BARS_COUNT - 1 - i];
-                    gsap.to(meshLeft.scale, { y: height, duration: 0.05 });
+                    gsap.to(barMeshes[i].scale, { y: height, duration: 0.05 });
+                    gsap.to(barMeshes[BARS_COUNT - 1 - i].scale, { y: height, duration: 0.05 });
                 }
             }
 
-            // --- KINETIC AUDIO REACTIVE EFFECTS ---
-            // 1. Camera Beat Pump & Slight Orbit
             camera.position.z = 18 - (bassKick * 2.5);
             camera.position.x = Math.sin(time * 0.5) * 0.5;
             camera.position.y = Math.cos(time * 0.3) * 0.5;
 
-            // 2. Center Ring Pulsing & Rotation
             barsGroup.rotation.z = time * 0.1;
             const groupScale = 1 + (bassKick * 0.15);
             barsGroup.scale.set(groupScale, groupScale, groupScale);
 
-            // 3. Particle Flow
             const positions = particleSystem.geometry.attributes.position.array;
             for (let i = 1; i < particleCount * 3; i += 3) {
-                positions[i] += 0.02 + (bassKick * 0.08); // Move upward faster on beat
+                positions[i] += 0.02 + (bassKick * 0.08);
                 if (positions[i] > 20) positions[i] = -20;
             }
             particleSystem.geometry.attributes.position.needsUpdate = true;
@@ -250,25 +230,41 @@
 
         animate();
 
-        // --- 6. CONTROLS & RESIZE ---
+        // --- 6. CONTROLS ---
         const playBtn = document.getElementById('playBtn');
+        const audioInput = document.getElementById('audioInput');
 
         playBtn.addEventListener('click', () => {
-            if (!audioCtx) initAudio();
-
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
 
             if (isPlaying) {
                 audio.pause();
                 isPlaying = false;
                 playBtn.innerText = "▶ PLAY TRACK";
             } else {
-                audio.play();
+                audio.play().then(() => {
+                    isPlaying = true;
+                    playBtn.innerText = "⏸ PAUSE TRACK";
+                }).catch(e => console.error("Audio play error:", e));
+            }
+        });
+
+        // Local MP3 Loader
+        audioInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            audio.src = URL.createObjectURL(file);
+            document.getElementById('track-info').innerText = file.name;
+
+            audio.play().then(() => {
                 isPlaying = true;
                 playBtn.innerText = "⏸ PAUSE TRACK";
-            }
+            });
         });
 
         window.addEventListener('resize', () => {
