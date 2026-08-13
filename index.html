@@ -3,111 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viral Meme Script & Voice Engine</title>
+    <title>Multi-Character Funny Voice Engine</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; max-width: 700px; margin: 30px auto; padding: 20px; background-color: #0f172a; color: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; max-width: 750px; margin: 30px auto; padding: 20px; background-color: #0f172a; color: #f8fafc; }
         .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
         button { padding: 14px; font-size: 16px; font-weight: bold; cursor: pointer; background: #3b82f6; color: white; border: none; border-radius: 8px; width: 100%; transition: 0.2s; }
         button:hover { background: #2563eb; }
         button:disabled { background: #64748b; cursor: not-allowed; }
         textarea, select, input { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid #475569; border-radius: 8px; background: #0f172a; color: #fff; box-sizing: border-box; font-size: 14px; }
-        textarea { height: 110px; resize: vertical; }
+        textarea { height: 140px; resize: vertical; }
         .row { display: flex; gap: 10px; }
         audio { width: 100%; margin-top: 10px; }
-        .tag { background: #334155; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #38bdf8; }
+        .badge { background: #334155; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #38bdf8; }
     </style>
 </head>
 <body>
 
-    <h2>🚀 Viral Meme Script & Pitch-Shifted Voice Engine</h2>
+    <h2>🎭 Multi-Character Dialogue & Voice Engine</h2>
 
     <div class="card">
-        <label for="topic"><strong>1. Video Concept / Joke Topic:</strong></label>
-        <input type="text" id="topic" value="Teacher catching a student using ChatGPT during O/L exam">
+        <label for="topic"><strong>1. Dialogue Scenario:</strong></label>
+        <input type="text" id="topic" value="Teacher catching a student playing games during O/L exam">
 
         <div class="row">
             <div style="flex: 1;">
-                <label for="voiceSelect"><strong>2. Pick Funny Voice:</strong></label>
-                <select id="voiceSelect">
-                    <option value="JBFqnCBsd6RMkjVDRZzb">George (Expressive & Panicked)</option>
-                    <option value="cgSgspJ2msm6clMCkdW9">Jessica (High Energy Sarcastic)</option>
-                    <option value="21m00Tcm4TlvDq8ikWAM">Rachel (Calm Meme Narrator)</option>
-                    <option value="pNInz6obpgDQGcFmaJgB">Adam (Classic Deep Meme Voice)</option>
+                <label for="voiceA"><strong>Character A Voice (e.g. Teacher):</strong></label>
+                <select id="voiceA">
+                    <option value="pNInz6obpgDQGcFmaJgB">Adam (Deep Angry/Serious)</option>
+                    <option value="JBFqnCBsd6RMkjVDRZzb">George (Expressive Screaming)</option>
                 </select>
             </div>
             <div style="flex: 1;">
-                <label for="speedRate"><strong>3. Speed / Pitch Effect:</strong></label>
-                <select id="speedRate">
-                    <option value="1.25">1.25x (Fast Cartoon / Funny)</option>
-                    <option value="1.4">1.4x (Chipmunk / Ultra Energetic)</option>
-                    <option value="1.0">1.0x (Normal Speed)</option>
+                <label for="voiceB"><strong>Character B Voice (e.g. Student):</strong></label>
+                <select id="voiceB">
+                    <option value="cgSgspJ2msm6clMCkdW9">Jessica (Fast High-Pitched)</option>
+                    <option value="21m00Tcm4TlvDq8ikWAM">Rachel (Calm Sarcastic)</option>
                 </select>
             </div>
         </div>
 
-        <button id="generateBtn" onclick="runPipeline()">🔥 Generate Hilarious Voiceover</button>
+        <div class="row">
+            <div style="flex: 1;">
+                <label for="speedRate"><strong>Global Cartoon Speed:</strong></label>
+                <select id="speedRate">
+                    <option value="1.25">1.25x (Fast Comedy)</option>
+                    <option value="1.4">1.4x (Chipmunk / Super Energetic)</option>
+                    <option value="1.0">1.0x (Normal)</option>
+                </select>
+            </div>
+        </div>
+
+        <button id="generateBtn" onclick="runPipeline()">🔥 Generate Multi-Voice Dialogue</button>
     </div>
 
     <div class="card">
-        <label for="scriptOutput"><strong>4. Generated Script (GPT-4o Script):</strong></label>
-        <p><span class="tag">Tip: Edit text directly below if you want to tweak the joke!</span></p>
-        <textarea id="scriptOutput" placeholder="Your script will show here..."></textarea>
+        <label for="scriptOutput"><strong>2. Multi-Character Script (GPT-4o):</strong></label>
+        <p><span class="badge">Format strictly required: "A: line" and "B: line"</span></p>
+        <textarea id="scriptOutput" placeholder="Your script will appear here..."></textarea>
     </div>
 
     <div class="card">
-        <label><strong>5. Funny Voice Output (ElevenLabs):</strong></label>
-        <div id="audioPlayer">Audio preview will render here...</div>
+        <label><strong>3. Combined Stitched Audio:</strong></label>
+        <div id="audioPlayer">Stitched audio will appear here...</div>
     </div>
 
     <script>
         async function runPipeline() {
             const topic = document.getElementById('topic').value;
-            const voiceId = document.getElementById('voiceSelect').value;
+            const voiceA = document.getElementById('voiceA').value;
+            const voiceB = document.getElementById('voiceB').value;
             const speed = parseFloat(document.getElementById('speedRate').value);
+            
             const btn = document.getElementById('generateBtn');
             const scriptBox = document.getElementById('scriptOutput');
             const audioPlayer = document.getElementById('audioPlayer');
 
             btn.disabled = true;
-            btn.innerText = "Writing Meme Script...";
+            btn.innerText = "Writing Dialogue Script...";
 
             try {
-                // Step A: Generate script with GPT-4o optimized for fast-paced viral comedy
-                const prompt = `Write an ultra-short (10 to 15 seconds max, under 25 words) hilarious meme script about: "${topic}". 
-                Style: Panicked, fast-paced, high emotion, similar to short 2D viral animation memes. 
-                Output ONLY the plain text spoken lines. No stage directions, no quotes.`;
-                
+                // Step 1: Prompt GPT-4o for tagged A/B dialogue
+                const prompt = `Write an ultra-short, hilarious 2-character dialogue (under 25 words total) about: "${topic}".
+                Format strict rules:
+                Line 1 must start with "A: "
+                Line 2 must start with "B: "
+                Line 3 (optional) must start with "A: " or "B: "
+                No other text, stage directions, or markdown.`;
+
                 const chatResponse = await puter.ai.chat(prompt, { model: "openai/gpt-4o" });
                 const scriptText = chatResponse.message.content.trim();
                 scriptBox.value = scriptText;
 
-                btn.innerText = "Generating Funny Voiceover...";
+                btn.innerText = "Generating Character Voices...";
 
-                // Step B: Text-to-Speech via ElevenLabs
-                const audio = await puter.ai.txt2speech(scriptText, {
-                    provider: "elevenlabs",
-                    voice: voiceId,
-                    model: "eleven_multilingual_v2"
-                });
+                // Step 2: Parse lines
+                const lines = scriptText.split('\n').filter(line => line.trim().length > 0);
+                const audioBlobs = [];
 
-                // Apply funny speed / pitch shift effect
-                audio.playbackRate = speed;
+                for (let line of lines) {
+                    let voiceId = voiceA;
+                    let text = line.replace(/^[AB]:\s*/i, '').trim();
 
-                // Step C: Display controls and play
+                    if (line.toUpperCase().startsWith('B:')) {
+                        voiceId = voiceB;
+                    }
+
+                    if (!text) continue;
+
+                    // Generate voice per line via ElevenLabs
+                    const audioElem = await puter.ai.txt2speech(text, {
+                        provider: "elevenlabs",
+                        voice: voiceId,
+                        model: "eleven_multilingual_v2"
+                    });
+
+                    // Fetch raw audio buffer for stitching
+                    const response = await fetch(audioElem.src);
+                    const arrayBuffer = await response.arrayBuffer();
+                    audioBlobs.push(arrayBuffer);
+                }
+
+                btn.innerText = "Stitching Character Audio...";
+
+                // Step 3: Stitch Audio Buffers with Web Audio API
+                const stitchedAudioUrl = await mergeAudioBuffers(audioBlobs);
+
+                // Step 4: Display Output
                 audioPlayer.innerHTML = '';
-                audio.controls = true;
-                audioPlayer.appendChild(audio);
-                
-                audio.play();
+                const finalAudio = new Audio(stitchedAudioUrl);
+                finalAudio.controls = true;
+                finalAudio.playbackRate = speed; // apply funny cartoon speed shift
+                audioPlayer.appendChild(finalAudio);
+
+                finalAudio.play();
 
             } catch (error) {
                 console.error(error);
                 alert("Error: " + error.message);
             } finally {
                 btn.disabled = false;
-                btn.innerText = "🔥 Generate Hilarious Voiceover";
+                btn.innerText = "🔥 Generate Multi-Voice Dialogue";
             }
+        }
+
+        // Helper function to concatenate multiple audio buffers sequentially
+        async function mergeAudioBuffers(arrayBuffers) {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const decodedBuffers = await Promise.all(
+                arrayBuffers.map(buffer => audioCtx.decodeAudioData(buffer))
+            );
+
+            const totalLength = decodedBuffers.reduce((acc, buf) => acc + buf.length, 0);
+            const outputBuffer = audioCtx.createBuffer(
+                1, totalLength, audioCtx.sampleRate
+            );
+
+            let offset = 0;
+            const channelData = outputBuffer.getChannelData(0);
+            for (const buf of decodedBuffers) {
+                channelData.set(buf.getChannelData(0), offset);
+                offset += buf.length;
+            }
+
+            // Convert AudioBuffer to WAV Blob
+            return bufferToWaveUrl(outputBuffer, totalLength);
+        }
+
+        function bufferToWaveUrl(abuffer, len) {
+            let numOfChan = abuffer.numberOfChannels,
+                length = len * numOfChan * 2 + 44,
+                buffer = new ArrayBuffer(length),
+                view = new DataView(buffer),
+                channels = [], i, sample,
+                offset = 0,
+                pos = 0;
+
+            function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
+            function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
+
+            setUint32(0x46464952); // "RIFF"
+            setUint32(length - 8);
+            setUint32(0x45564157); // "WAVE"
+            setUint32(0x20746d66); // "fmt "
+            setUint32(16);
+            setUint16(1);
+            setUint16(numOfChan);
+            setUint32(abuffer.sampleRate);
+            setUint32(abuffer.sampleRate * 2 * numOfChan);
+            setUint16(numOfChan * 2);
+            setUint16(16);
+            setUint32(0x61746164); // "data"
+            setUint32(length - pos - 4);
+
+            for (i = 0; i < abuffer.numberOfChannels; i++) channels.push(abuffer.getChannelData(i));
+
+            while (offset < len) {
+                for (i = 0; i < numOfChan; i++) {
+                    sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+                    view.setInt16(pos, sample, true); pos += 2;
+                }
+                offset++;
+            }
+
+            const blob = new Blob([buffer], { type: "audio/wav" });
+            return URL.createObjectURL(blob);
         }
     </script>
 </body>
