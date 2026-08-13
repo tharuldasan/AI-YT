@@ -3,464 +3,278 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA // V4 AUTOMATED SHORTS ENGINE</title>
+    <title>PRO 3D WEBGL SPECTRUM</title>
     <style>
-        :root {
-            --bg: #05070f; --card: #0d111d; --primary: #00f0ff;
-            --text: #f8fafc; --border: #1e293b;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-color: var(--bg); color: var(--text);
-            margin: 0; padding: 20px; display: flex; gap: 20px;
-            justify-content: center; flex-wrap: wrap;
+            background-color: #030308;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
-        .panel {
-            background: var(--card); padding: 24px; border-radius: 12px;
-            width: 100%; max-width: 420px; border: 1px solid var(--border);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
         }
-        h1 { margin: 0 0 4px; color: var(--primary); font-size: 22px; letter-spacing: 2px; text-transform: uppercase; }
-        .subtitle { font-size: 11px; color: #64748b; margin-bottom: 20px; letter-spacing: 1px; }
-        label { display: block; margin: 12px 0 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #94a3b8; }
-        input[type="text"], input[type="color"] {
-            width: 100%; padding: 12px; background: #05070f; border: 1px solid var(--border);
-            border-radius: 6px; color: #fff; box-sizing: border-box; font-size: 14px;
+        .ui-overlay {
+            position: absolute;
+            bottom: 30px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            background: rgba(10, 10, 20, 0.6);
+            padding: 20px 30px;
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
         }
-        input[type="range"] { width: 100%; margin-bottom: 5px; cursor: pointer; }
-        .search-group { display: flex; gap: 8px; }
-        .search-group button { width: auto; white-space: nowrap; }
-        .canvas-container {
-            background: #000; border-radius: 12px; overflow: hidden;
-            border: 2px solid var(--border); width: 360px; height: 640px; 
-            position: relative; box-shadow: 0 0 50px rgba(0, 240, 255, 0.15);
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
         }
-        canvas { width: 100%; height: 100%; display: block; }
         button {
-            width: 100%; padding: 14px; margin-top: 12px;
-            background: linear-gradient(135deg, var(--primary), #0072ff);
-            color: #000; border: none; border-radius: 6px; font-weight: 900;
-            letter-spacing: 1px; cursor: pointer; text-transform: uppercase;
-            transition: all 0.2s ease;
+            background: linear-gradient(135deg, #00f0ff, #7000ff);
+            border: none;
+            color: white;
+            padding: 12px 28px;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
         }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-        button.record { background: linear-gradient(135deg, #ff0055, #ff0000); color: white; }
-        button:disabled { background: #334155; color: #64748b; cursor: not-allowed; transform: none; }
-        .file-inputs { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); }
-        .color-group { display: flex; gap: 10px; }
-        .color-group div { flex: 1; }
-        .value-display { font-size: 12px; color: var(--primary); float: right; }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(112, 0, 255, 0.8);
+        }
+        .info {
+            font-size: 12px;
+            color: #a0a0c0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
     </style>
+    <!-- Three.js Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- GSAP for Smooth Motion Interpolation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
 <body>
 
-    <div class="panel">
-        <h1>⚡ AURA ENGINE V4</h1>
-        <div class="subtitle">SMOOTH MIRRORED SPECTRUM & KINETIC BASS</div>
-        
-        <label>1. Search Song Online (Auto-Fetches Official BG):</label>
-        <div class="search-group">
-            <input type="text" id="songQuery" placeholder="e.g. Metamorphosis Phonk">
-            <button onclick="searchSong()">Search</button>
+    <div id="canvas-container"></div>
+
+    <div class="ui-overlay">
+        <div class="info" id="track-info">AURA // HYPER-SMOOTH WEBGL SPECTRUM</div>
+        <div class="controls">
+            <button id="playBtn">▶ PLAY TRACK</button>
         </div>
-
-        <div class="file-inputs">
-            <div class="color-group">
-                <div>
-                    <label>Outer Glow Color:</label>
-                    <input type="color" id="themeColor" value="#00f0ff">
-                </div>
-                <div>
-                    <label>Inner Fill Color:</label>
-                    <input type="color" id="innerColor" value="#000000">
-                </div>
-            </div>
-            
-            <label>Playback Speed (Slowed): <span class="value-display" id="speedVal">1.0x</span></label>
-            <input type="range" id="speedSlider" min="0.5" max="1.5" step="0.05" value="1.0">
-            
-            <label>Inner Logo Picture Size: <span class="value-display" id="logoSizeVal">240px</span></label>
-            <input type="range" id="logoSizeSlider" min="100" max="400" step="10" value="240">
-
-            <label>Optional: Custom BG (Overrides Official):</label>
-            <input type="file" id="bgInput" accept="image/*">
-            
-            <label>Optional: Custom Logo (Overrides logo.png):</label>
-            <input type="file" id="logoInput" accept="image/*">
-
-            <label>Or Local MP3 File:</label>
-            <input type="file" id="audioInput" accept="audio/*">
-        </div>
-
-        <button id="playBtn" disabled>▶️ PLAY & PREVIEW</button>
-        <button id="recordBtn" class="record" disabled>🔴 RECORD SHORTS VIDEO (.WEBM)</button>
-        <div id="status" style="font-size: 11px; color: #00f0ff; margin-top: 10px; text-align: center;"></div>
-    </div>
-
-    <div class="canvas-container">
-        <!-- Render resolution strictly set to 1080x1920 vertical -->
-        <canvas id="visualizer" width="1080" height="1920"></canvas>
     </div>
 
     <script>
-        const canvas = document.getElementById('visualizer');
-        const ctx = canvas.getContext('2d');
+        // --- 1. SCENE SETUP ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x030308, 0.002);
 
-        // Assets & State
-        let bgImg = new Image();
-        let logoImg = new Image();
-        logoImg.src = 'logo.png'; 
-        
-        let particles = [];
-        let themeColor = "#00f0ff";
-        let innerColor = "#000000";
-        let innerLogoSize = 240;
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 18);
 
-        // Web Audio
-        let audioCtx, source, analyser, gainNode, mediaDest;
-        let audioBuffer = null;
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        // --- 2. AUDIO PIPELINE ---
+        let audioCtx, analyser, dataArray, source;
         let isPlaying = false;
-        let startTime = 0;
 
-        // Recording
-        let mediaRecorder;
-        let recordedChunks = [];
+        // Sample Track (Royalty-free Phonk / Cyberpunk Stream)
+        const audio = new Audio();
+        audio.crossOrigin = "anonymous";
+        audio.src = "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=montagem-pr-funk-110191.mp3";
 
-        // UI Elements
-        const statusTxt = document.getElementById('status');
-        const playBtn = document.getElementById('playBtn');
-        const recordBtn = document.getElementById('recordBtn');
-        const speedSlider = document.getElementById('speedSlider');
-        const logoSizeSlider = document.getElementById('logoSizeSlider');
-
-        // Init Dust Particles for depth
-        for(let i = 0; i < 75; i++) {
-            particles.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                size: Math.random() * 4 + 1, 
-                speedY: Math.random() * -2 - 1,
-                speedX: (Math.random() - 0.5) * 1.5,
-                opacity: Math.random() * 0.5 + 0.1
-            });
-        }
-
-        // Event Listeners for UI
-        document.getElementById('themeColor').addEventListener('input', (e) => {
-            themeColor = e.target.value;
-            document.documentElement.style.setProperty('--primary', themeColor);
-        });
-        
-        document.getElementById('innerColor').addEventListener('input', (e) => {
-            innerColor = e.target.value;
-        });
-        
-        speedSlider.addEventListener('input', (e) => {
-            document.getElementById('speedVal').innerText = e.target.value + 'x';
-            if (source) source.playbackRate.value = e.target.value;
-        });
-
-        logoSizeSlider.addEventListener('input', (e) => {
-            innerLogoSize = parseInt(e.target.value);
-            document.getElementById('logoSizeVal').innerText = innerLogoSize + 'px';
-        });
-
-        document.getElementById('bgInput').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if(file) bgImg.src = URL.createObjectURL(file);
-        });
-        document.getElementById('logoInput').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if(file) logoImg.src = URL.createObjectURL(file);
-        });
-
-        // Online Song Search
-        async function searchSong() {
-            const query = document.getElementById('songQuery').value;
-            if(!query) return;
-            statusTxt.innerText = "Searching online audio...";
-
-            try {
-                const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=1`);
-                const data = await res.json();
-                if(data.results.length === 0) return statusTxt.innerText = "No track found.";
-
-                const track = data.results[0];
-                statusTxt.innerText = `Loaded: ${track.trackName} - ${track.artistName}`;
-                
-                if(!document.getElementById('bgInput').files.length) {
-                    bgImg.src = track.artworkUrl100.replace('100x100bb', '1000x1000bb');
-                }
-
-                const audioRes = await fetch(track.previewUrl);
-                const arrayBuffer = await audioRes.arrayBuffer();
-                
-                if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-                playBtn.disabled = false;
-            } catch(err) {
-                statusTxt.innerText = "Error: " + err.message;
-            }
-        }
-
-        // Local Audio Loader
-        document.getElementById('audioInput').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            statusTxt.innerText = "Decoding local audio file...";
-            
-            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const arrayBuffer = await file.arrayBuffer();
-            audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-            
-            playBtn.disabled = false;
-            statusTxt.innerText = "Local file loaded!";
-        });
-
-        function setupAudio() {
-            source = audioCtx.createBufferSource();
-            source.buffer = audioBuffer;
-            source.playbackRate.value = speedSlider.value;
-
-            gainNode = audioCtx.createGain(); 
-            gainNode.gain.value = 0; 
-
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 256; 
-            // Extreme smoothing for that fluid Vizzy look
-            analyser.smoothingTimeConstant = 0.88; 
+            analyser.fftSize = 512;
+            analyser.smoothingTimeConstant = 0.82; // Balanced smoothing
 
-            mediaDest = audioCtx.createMediaStreamDestination();
-
-            source.connect(gainNode);
-            gainNode.connect(analyser);
+            source = audioCtx.createMediaElementSource(audio);
+            source.connect(analyser);
             analyser.connect(audioCtx.destination);
-            analyser.connect(mediaDest);
+
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
         }
+
+        // --- 3. SPECTRUM MESH CREATION (CURVED SPLINE SHAPE) ---
+        const BARS_COUNT = 120; // High resolution points
+        const RADIUS = 5.5;
+        const barsGroup = new THREE.Group();
+        scene.add(barsGroup);
+
+        // Individual instanced bars forming a 3D glowing ring
+        const barGeometry = new THREE.BoxGeometry(0.08, 1, 0.08);
+        const barMaterials = [];
+        const barMeshes = [];
+
+        for (let i = 0; i < BARS_COUNT; i++) {
+            const angle = (i / BARS_COUNT) * Math.PI * 2;
+            
+            // Dynamic Color Gradient (Cyan to Purple/Magenta)
+            const hue = (i / BARS_COUNT) * 0.4 + 0.5; // range 0.5 (cyan) to 0.9 (magenta)
+            const color = new THREE.Color().setHSL(hue, 1.0, 0.5);
+
+            const mat = new THREE.MeshBasicMaterial({
+                color: color,
+                wireframe: false
+            });
+            barMaterials.push(mat);
+
+            const mesh = new THREE.Mesh(barGeometry, mat);
+            
+            // Position around circle
+            mesh.position.x = Math.cos(angle) * RADIUS;
+            mesh.position.y = Math.sin(angle) * RADIUS;
+            mesh.rotation.z = angle - Math.PI / 2;
+
+            barsGroup.add(mesh);
+            barMeshes.push(mesh);
+        }
+
+        // Center Black Core (To mask the inside cleanly)
+        const coreGeo = new THREE.CircleGeometry(RADIUS - 0.1, 64);
+        const coreMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        coreMesh.position.z = -0.1;
+        barsGroup.add(coreMesh);
+
+        // Center Outer Glow Ring
+        const ringGeo = new THREE.RingGeometry(RADIUS - 0.05, RADIUS + 0.05, 64);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide });
+        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+        ringMesh.position.z = 0.05;
+        barsGroup.add(ringMesh);
+
+        // --- 4. FLOATING 3D PARTICLE FIELD ---
+        const particleCount = 600;
+        const particleGeo = new THREE.BufferGeometry();
+        const particlePositions = new Float32Array(particleCount * 3);
+
+        for(let i = 0; i < particleCount * 3; i += 3) {
+            particlePositions[i] = (Math.random() - 0.5) * 40;
+            particlePositions[i+1] = (Math.random() - 0.5) * 40;
+            particlePositions[i+2] = (Math.random() - 0.5) * 20 - 5;
+        }
+
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+        const particleMat = new THREE.PointsMaterial({
+            color: 0x00f0ff,
+            size: 0.1,
+            transparent: true,
+            opacity: 0.6
+        });
+        const particleSystem = new THREE.Points(particleGeo, particleMat);
+        scene.add(particleSystem);
+
+        // --- 5. RENDER LOOP & AUDIO ANIMATION ---
+        let clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            let bassKick = 0;
+
+            if (isPlaying && analyser) {
+                analyser.getByteFrequencyData(dataArray);
+
+                // Calculate Bass Energy (low frequency bins 0 to 6)
+                let bassSum = 0;
+                for (let i = 0; i < 6; i++) bassSum += dataArray[i];
+                bassKick = bassSum / 6 / 255; // Normalized 0.0 -> 1.0
+
+                // Update Spectrum Bars Symmetrically
+                const halfCount = BARS_COUNT / 2;
+                
+                for (let i = 0; i < halfCount; i++) {
+                    // Mirror mapping
+                    const rawVal = dataArray[i % 64]; 
+                    const height = (rawVal / 255) * 7 + 0.1; // Scale bar height
+
+                    // Right Side
+                    const meshRight = barMeshes[i];
+                    gsap.to(meshRight.scale, { y: height, duration: 0.05 });
+
+                    // Left Side (Mirror)
+                    const meshLeft = barMeshes[BARS_COUNT - 1 - i];
+                    gsap.to(meshLeft.scale, { y: height, duration: 0.05 });
+                }
+            }
+
+            // --- KINETIC AUDIO REACTIVE EFFECTS ---
+            // 1. Camera Beat Pump & Slight Orbit
+            camera.position.z = 18 - (bassKick * 2.5);
+            camera.position.x = Math.sin(time * 0.5) * 0.5;
+            camera.position.y = Math.cos(time * 0.3) * 0.5;
+
+            // 2. Center Ring Pulsing & Rotation
+            barsGroup.rotation.z = time * 0.1;
+            const groupScale = 1 + (bassKick * 0.15);
+            barsGroup.scale.set(groupScale, groupScale, groupScale);
+
+            // 3. Particle Flow
+            const positions = particleSystem.geometry.attributes.position.array;
+            for (let i = 1; i < particleCount * 3; i += 3) {
+                positions[i] += 0.02 + (bassKick * 0.08); // Move upward faster on beat
+                if (positions[i] > 20) positions[i] = -20;
+            }
+            particleSystem.geometry.attributes.position.needsUpdate = true;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // --- 6. CONTROLS & RESIZE ---
+        const playBtn = document.getElementById('playBtn');
 
         playBtn.addEventListener('click', () => {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (!audioCtx) initAudio();
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
 
             if (isPlaying) {
-                source.stop();
+                audio.pause();
                 isPlaying = false;
-                playBtn.innerText = "▶️ PLAY & PREVIEW";
-                recordBtn.disabled = true;
+                playBtn.innerText = "▶ PLAY TRACK";
             } else {
-                setupAudio();
-                source.start(0);
-                startTime = audioCtx.currentTime;
+                audio.play();
                 isPlaying = true;
-                playBtn.innerText = "⏸️ STOP AUDIO";
-                recordBtn.disabled = false;
-                renderFrame();
+                playBtn.innerText = "⏸ PAUSE TRACK";
             }
         });
 
-        // Smooth Bezier Curve Drawing Function
-        function drawSmoothCurve(ctx, points) {
-            ctx.beginPath();
-            ctx.moveTo(points[0].x, points[0].y);
-            
-            for (let i = 0; i < points.length; i++) {
-                let p = points[i];
-                let nextP = points[(i + 1) % points.length];
-                // Calculate midpoint to act as a smooth anchor
-                let xc = (p.x + nextP.x) / 2;
-                let yc = (p.y + nextP.y) / 2;
-                ctx.quadraticCurveTo(p.x, p.y, xc, yc);
-            }
-            ctx.closePath();
-        }
-
-        function renderFrame() {
-            if (!isPlaying) return;
-            requestAnimationFrame(renderFrame);
-
-            let elapsed = audioCtx.currentTime - startTime;
-            let currentSpeed = parseFloat(speedSlider.value);
-            let actualDuration = audioBuffer.duration / currentSpeed;
-            
-            let fadeAlpha = 1;
-            if (elapsed < 1.5) fadeAlpha = elapsed / 1.5; 
-            else if (actualDuration - elapsed < 1.5) fadeAlpha = Math.max(0, (actualDuration - elapsed) / 1.5); 
-            
-            if (gainNode) gainNode.gain.value = fadeAlpha;
-            
-            if (elapsed >= actualDuration) {
-                isPlaying = false;
-                playBtn.innerText = "▶️ PLAY & PREVIEW";
-                if(mediaRecorder && mediaRecorder.state === 'recording') recordBtn.click();
-                return;
-            }
-
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            analyser.getByteFrequencyData(dataArray);
-
-            // BASS ISOLATION: Average only the lowest frequencies (bins 0 to 4)
-            let bassSum = 0;
-            for(let i = 0; i < 5; i++) bassSum += dataArray[i];
-            let bassIntensity = bassSum / 5; 
-            
-            // STRICT SHAKE TRIGGER: Only happens on hard kicks
-            let kick = bassIntensity > 220 ? (bassIntensity - 220) / 35 : 0; 
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.globalAlpha = fadeAlpha;
-
-            const cx = canvas.width / 2;
-            const cy = canvas.height / 2;
-
-            // 1. Kinetic Camera Shake (Translational + Rotational tied strictly to kick)
-            ctx.save();
-            let shakeX = (Math.random() - 0.5) * kick * 60;
-            let shakeY = (Math.random() - 0.5) * kick * 60;
-            let rotationAngle = (Math.random() - 0.5) * kick * 0.05; 
-            
-            ctx.translate(cx + shakeX, cy + shakeY);
-            ctx.rotate(rotationAngle);
-            ctx.translate(-cx, -cy);
-
-            // 2. Background Drawing (Scaled up to cover edges during shake)
-            if (bgImg.src && bgImg.complete) {
-                let scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height) * 1.15;
-                let x = (canvas.width / 2) - (bgImg.width / 2) * scale;
-                let y = (canvas.height / 2) - (bgImg.height / 2) * scale;
-                ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
-            } else {
-                ctx.fillStyle = "#05070f";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-
-            // 3. Cinematic Vignette & Color Bleed Layer
-            let grad = ctx.createRadialGradient(cx, cy, 300, cx, cy, 1200);
-            grad.addColorStop(0, "transparent");
-            grad.addColorStop(1, "rgba(0,0,0,0.85)");
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Pulse color overlay on beat
-            ctx.fillStyle = themeColor;
-            ctx.globalCompositeOperation = "overlay";
-            ctx.globalAlpha = (kick * 0.5) * fadeAlpha;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.globalCompositeOperation = "source-over";
-            ctx.globalAlpha = fadeAlpha;
-
-            // 4. Floating Dust Particles
-            ctx.fillStyle = themeColor;
-            for(let p of particles) {
-                p.y += p.speedY - (kick * 8);
-                p.x += p.speedX;
-                if(p.y < 0) p.y = canvas.height + p.size;
-                if(p.x < 0 || p.x > canvas.width) p.x = Math.random() * canvas.width;
-
-                ctx.globalAlpha = p.opacity * fadeAlpha;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size + (kick * 3), 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.globalAlpha = fadeAlpha;
-
-            // 5. Smooth, Solid Mirrored Spectrum Shape
-            const spectrumBaseRadius = 250; 
-            const numPoints = 40; // Number of points per half
-            let points = [];
-
-            // Calculate points: Top to Bottom (Right Side)
-            for(let i = 0; i <= numPoints; i++) {
-                let val = dataArray[i]; // Grab frequency
-                let height = (val / 255) * 160 * (1 + kick * 0.3); // Map to pixel height
-                let r = spectrumBaseRadius + height;
-                let angle = -Math.PI / 2 + (i / numPoints) * Math.PI; // -90 to 90 degrees
-                points.push({
-                    x: cx + Math.cos(angle) * r,
-                    y: cy + Math.sin(angle) * r
-                });
-            }
-
-            // Calculate points: Bottom to Top (Left Side - MIRRORED)
-            for(let i = numPoints - 1; i >= 0; i--) {
-                let val = dataArray[i]; // Use exactly the same data for perfect mirror
-                let height = (val / 255) * 160 * (1 + kick * 0.3);
-                let r = spectrumBaseRadius + height;
-                let angle = Math.PI / 2 + ((numPoints - i) / numPoints) * Math.PI; // 90 to 270 degrees
-                points.push({
-                    x: cx + Math.cos(angle) * r,
-                    y: cy + Math.sin(angle) * r
-                });
-            }
-
-            // Draw the customized filled shape
-            drawSmoothCurve(ctx, points);
-            
-            // Set Inner Fill Color
-            ctx.fillStyle = innerColor;
-            ctx.fill();
-
-            // Set Outer Glowing Line Color
-            ctx.strokeStyle = themeColor;
-            ctx.lineWidth = 6 + (kick * 4);
-            ctx.shadowBlur = 25 + (kick * 30);
-            ctx.shadowColor = themeColor;
-            ctx.stroke();
-            ctx.shadowBlur = 0; // Reset glow
-
-            // 6. Draw Independent Inner Logo
-            if (logoImg.src && logoImg.complete && logoImg.naturalWidth !== 0) {
-                // Size controlled exclusively by the slider, plus a tiny bass pump
-                let currentLogoSize = innerLogoSize + (kick * 10); 
-                
-                ctx.save();
-                ctx.beginPath();
-                // Ensure the image never bleeds outside the base spectrum circle
-                ctx.arc(cx, cy, spectrumBaseRadius - 2, 0, Math.PI * 2); 
-                ctx.clip();
-                ctx.drawImage(logoImg, cx - currentLogoSize/2, cy - currentLogoSize/2, currentLogoSize, currentLogoSize);
-                ctx.restore();
-            }
-
-            ctx.restore(); // Restore camera matrix
-        }
-
-        // Recording Functionality
-        recordBtn.addEventListener('click', () => {
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-                recordBtn.innerText = "🔴 RECORD SHORTS VIDEO (.WEBM)";
-                statusTxt.innerText = "Encoding video file...";
-                return;
-            }
-
-            const canvasStream = canvas.captureStream(30);
-            const combinedStream = new MediaStream([
-                ...canvasStream.getVideoTracks(), 
-                ...mediaDest.stream.getAudioTracks()
-            ]);
-
-            mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
-            recordedChunks = [];
-
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) recordedChunks.push(e.data);
-            };
-
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(recordedChunks, { type: 'video/webm' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = `AURA_SHORTS_${Date.now()}.webm`;
-                a.click();
-                URL.revokeObjectURL(url);
-                statusTxt.innerText = "Aura Shorts Video Exported!";
-            };
-
-            mediaRecorder.start();
-            recordBtn.innerText = "⏹️ STOP & SAVE SHORTS VIDEO";
-            statusTxt.innerText = "Recording video in high-quality 1080x1920...";
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
 </body>
