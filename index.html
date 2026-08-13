@@ -3,265 +3,309 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ Free Automated Shorts Engine</title>
+    <title>Automated Audio Remixer & Visualizer</title>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --primary: #3b82f6;
-            --accent: #10b981;
-            --text: #f8fafc;
-            --border: #334155;
-            --warning: #f59e0b;
+            --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --text: #f8fafc;
         }
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-color);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
             color: var(--text);
-            max-width: 750px;
-            margin: 40px auto;
+            margin: 0;
             padding: 20px;
-            line-height: 1.5;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
+        .controls {
+            background: var(--card);
             padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-        h1 { color: #38bdf8; margin-top: 0; font-size: 24px; text-align: center; }
-        label { display: block; margin-top: 12px; font-weight: 600; font-size: 14px; color: #94a3b8; }
-        input, select, textarea {
+            border-radius: 12px;
             width: 100%;
-            padding: 12px;
-            margin-top: 6px;
-            background: #0f172a;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: #fff;
-            box-sizing: border-box;
-            font-size: 14px;
+            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
         }
-        textarea { height: 120px; resize: vertical; }
-        .row { display: flex; gap: 12px; }
+        h1, h2 { margin-top: 0; color: #38bdf8; font-size: 20px; }
+        label { display: block; margin: 12px 0 6px; font-size: 14px; font-weight: bold; }
+        input[type="file"], input[type="range"] {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .canvas-container {
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #334155;
+            /* Scale down visually for desktop, but internal resolution remains 1080x1920 */
+            width: 360px; 
+            height: 640px; 
+            position: relative;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
         button {
-            width: 100%;
-            padding: 16px;
-            margin-top: 20px;
-            background: linear-gradient(135deg, var(--primary), #2563eb);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            width: 100%; padding: 12px; margin-top: 10px;
+            background: var(--primary); color: white; border: none;
+            border-radius: 6px; font-weight: bold; cursor: pointer;
         }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-        button:disabled { background: #64748b; cursor: not-allowed; transform: none; }
-        .status {
-            margin-top: 15px;
-            padding: 12px;
-            background: #0284c7;
-            border-radius: 6px;
-            text-align: center;
-            font-weight: bold;
-            display: none;
-        }
-        .api-note {
-            font-size: 12px;
-            color: var(--warning);
-            margin-top: 4px;
-        }
-        .api-note a { color: #60a5fa; text-decoration: none; }
-        .api-note a:hover { text-decoration: underline; }
-        audio { width: 100%; margin-top: 15px; }
+        button.record { background: #ef4444; }
+        button:disabled { background: #475569; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <h1>🚀 Automated Shorts Script & Voice Engine</h1>
+    <div class="controls">
+        <h1>🎛️ AI Remixer & Visualizer</h1>
+        
+        <label>1. Upload Background Image (1080x1920):</label>
+        <input type="file" id="imageInput" accept="image/*">
 
-    <div class="card">
-        <label for="apiKey">1. Gemini API Key (Required for Text AI):</label>
-        <input type="password" id="apiKey" placeholder="Paste your free Gemini API key here...">
-        <div class="api-note">Get a free key from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a> (No credit card needed).</div>
+        <label>2. Upload Original Song (.mp3, .wav):</label>
+        <input type="file" id="audioInput" accept="audio/*">
 
-        <label for="topic">2. Video Concept / Joke Topic:</label>
-        <input type="text" id="topic" value="Student caught using ChatGPT during O/L exam">
+        <h2>Audio Effects (Phonk / Slowed Flip)</h2>
+        
+        <label>Playback Speed (Slowed & Reverb feel): <span id="speedVal">1.0</span>x</label>
+        <input type="range" id="speed" min="0.5" max="1.5" step="0.05" value="1.0">
 
-        <div class="row">
-            <div style="flex:1;">
-                <label for="voiceA">Teacher Voice (Character A):</label>
-                <select id="voiceA">
-                    <option value="Brian">Brian (Meme British Male)</option>
-                    <option value="Matthew">Matthew (Serious US Male)</option>
-                    <option value="Joey">Joey (Casual Male)</option>
-                </select>
-            </div>
-            <div style="flex:1;">
-                <label for="voiceB">Student Voice (Character B):</label>
-                <select id="voiceB">
-                    <option value="Justin">Justin (Kid / High Pitch)</option>
-                    <option value="Ivy">Ivy (Female Voice)</option>
-                    <option value="Amy">Amy (British Female)</option>
-                </select>
-            </div>
-        </div>
+        <label>Bass Boost (808 Punch): <span id="bassVal">0</span>dB</label>
+        <input type="range" id="bass" min="0" max="30" step="1" value="0">
 
-        <button id="generateBtn" onclick="runPipeline()">⚡ Fully Generate Script & Audio File</button>
-        <div id="status" class="status"></div>
+        <label>Distortion / Drive: <span id="driveVal">0</span></label>
+        <input type="range" id="drive" min="0" max="100" step="1" value="0">
+
+        <button id="playBtn" disabled>▶️ Play Remixed Audio</button>
+        <button id="recordBtn" class="record" disabled>🔴 Start Video Recording</button>
+        <p id="status" style="font-size: 12px; color: #94a3b8; text-align: center;"></p>
     </div>
 
-    <div class="card">
-        <label for="script">3. AI-Generated Dialogue (Editable):</label>
-        <textarea id="script" placeholder="AI script will populate automatically..."></textarea>
-
-        <label>4. Final Stitched Audio Preview:</label>
-        <div id="audioOutput">Your audio file will appear here...</div>
+    <div class="canvas-container">
+        <!-- Strictly set to 1080x1920 resolution for output -->
+        <canvas id="visualizer" width="1080" height="1920"></canvas>
     </div>
 
     <script>
-        async function runPipeline() {
-            const btn = document.getElementById('generateBtn');
-            const status = document.getElementById('status');
-            const apiKey = document.getElementById('apiKey').value.trim();
-            const topic = document.getElementById('topic').value;
-            const voiceA = document.getElementById('voiceA').value;
-            const voiceB = document.getElementById('voiceB').value;
-            const scriptBox = document.getElementById('script');
+        const canvas = document.getElementById('visualizer');
+        const ctx = canvas.getContext('2d');
+        let bgImage = new Image();
 
-            if (!apiKey) {
-                alert("Please enter a Gemini API Key first!");
+        // Audio Context & Nodes
+        let audioCtx, source, analyser, bassFilter, distortion, mediaDest;
+        let audioBuffer = null;
+        let isPlaying = false;
+        
+        // Media Recorder
+        let mediaRecorder;
+        let recordedChunks = [];
+
+        // UI Elements
+        const btnPlay = document.getElementById('playBtn');
+        const btnRecord = document.getElementById('recordBtn');
+        const statusTxt = document.getElementById('status');
+
+        // Load Background Image
+        document.getElementById('imageInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                bgImage.src = url;
+                bgImage.onload = () => drawFrame(); // Draw static background initially
+            }
+        });
+
+        // Load Audio File
+        document.getElementById('audioInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            statusTxt.innerText = "Decoding audio... please wait.";
+            
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const arrayBuffer = await file.arrayBuffer();
+            audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            
+            btnPlay.disabled = false;
+            statusTxt.innerText = "Audio loaded! Ready to play.";
+        });
+
+        // Distortion Curve Generator (for that aggressive Phonk sound)
+        function makeDistortionCurve(amount) {
+            const k = typeof amount === 'number' ? amount : 50,
+                n_samples = 44100,
+                curve = new Float32Array(n_samples),
+                deg = Math.PI / 180;
+            for (let i = 0; i < n_samples; ++i) {
+                let x = i * 2 / n_samples - 1;
+                curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+            }
+            return curve;
+        }
+
+        // Setup Audio Pipeline
+        function setupAudioNodes() {
+            source = audioCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.playbackRate.value = document.getElementById('speed').value;
+
+            // Bass EQ
+            bassFilter = audioCtx.createBiquadFilter();
+            bassFilter.type = "lowshelf";
+            bassFilter.frequency.value = 150;
+            bassFilter.gain.value = document.getElementById('bass').value;
+
+            // Distortion (Drive)
+            distortion = audioCtx.createWaveShaper();
+            distortion.curve = makeDistortionCurve(Number(document.getElementById('drive').value));
+            distortion.oversample = '4x';
+
+            // Visualizer Analyzer
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            analyser.smoothingTimeConstant = 0.8;
+
+            // Media Destination for Recording
+            mediaDest = audioCtx.createMediaStreamDestination();
+
+            // Connect Pipeline: Source -> Bass -> Distortion -> Analyzer
+            source.connect(bassFilter);
+            bassFilter.connect(distortion);
+            distortion.connect(analyser);
+            
+            // Output to Speakers AND Recording Stream
+            analyser.connect(audioCtx.destination);
+            analyser.connect(mediaDest);
+        }
+
+        // Real-time Sliders Update
+        ['speed', 'bass', 'drive'].forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                document.getElementById(id + 'Val').innerText = val;
+                if (!isPlaying) return;
+                
+                if (id === 'speed') source.playbackRate.value = val;
+                if (id === 'bass') bassFilter.gain.value = val;
+                if (id === 'drive') distortion.curve = makeDistortionCurve(val);
+            });
+        });
+
+        // Play / Stop Logic
+        btnPlay.addEventListener('click', () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            if (isPlaying) {
+                source.stop();
+                isPlaying = false;
+                btnPlay.innerText = "▶️ Play Remixed Audio";
+                btnRecord.disabled = true;
+            } else {
+                setupAudioNodes();
+                source.start(0);
+                isPlaying = true;
+                btnPlay.innerText = "⏸️ Stop Audio";
+                btnRecord.disabled = false;
+                drawFrame(); // Start visualization loop
+            }
+        });
+
+        // Visualization Render Loop
+        function drawFrame() {
+            if (!isPlaying && !bgImage.src) return;
+            requestAnimationFrame(drawFrame);
+
+            // Draw Background
+            if (bgImage.src) {
+                ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+            } else {
+                ctx.fillStyle = "#000";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            if (!isPlaying) return;
+
+            // Get Frequency Data
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+
+            // Draw Spectrum Bars overlay
+            const barWidth = (canvas.width / bufferLength) * 2.5;
+            let barHeight;
+            let x = 0;
+
+            for(let i = 0; i < bufferLength; i++) {
+                barHeight = dataArray[i] * 3; // Scale height for 1920px canvas
+
+                // Neon Purple/Pink Gradient
+                const gradient = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
+                gradient.addColorStop(0, "rgba(168, 85, 247, 0.8)"); // Purple
+                gradient.addColorStop(1, "rgba(236, 72, 153, 0.8)"); // Pink
+                
+                ctx.fillStyle = gradient;
+                
+                // Draw mirrored bars from center-bottom
+                ctx.fillRect(
+                    (canvas.width / 2) + x, 
+                    canvas.height - barHeight - 100, 
+                    barWidth, 
+                    barHeight
+                );
+                ctx.fillRect(
+                    (canvas.width / 2) - x - barWidth, 
+                    canvas.height - barHeight - 100, 
+                    barWidth, 
+                    barHeight
+                );
+
+                x += barWidth + 4;
+            }
+        }
+
+        // Recording Logic (Canvas + Web Audio)
+        btnRecord.addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                btnRecord.innerText = "🔴 Start Video Recording";
+                btnRecord.style.background = "#ef4444";
+                statusTxt.innerText = "Processing video file...";
                 return;
             }
 
-            btn.disabled = true;
-            status.style.display = 'block';
+            // Combine Canvas Video Stream and Audio Stream
+            const canvasStream = canvas.captureStream(30); // 30 FPS
+            const audioStream = mediaDest.stream; //
+            const combinedStream = new MediaStream([
+                ...canvasStream.getVideoTracks(), 
+                ...audioStream.getAudioTracks()
+            ]);
 
-            try {
-                // STEP 1: Generate AI Script (Using Google Gemini API)
-                status.innerText = "1/3: Writing meme script via Gemini AI...";
-                const promptText = `Write an ultra-short, hilarious 2-character dialogue (under 25 words total) about: "${topic}". Rules: Line 1 MUST start with "A: ", Line 2 MUST start with "B: ", Line 3 MUST start with "A: ". No other text or quotes.`;
-                
-                const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: promptText }] }]
-                    })
-                });
+            mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' }); //
+            
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) recordedChunks.push(e.data); //
+            };
 
-                if (!geminiResponse.ok) throw new Error("Gemini API rejected the request. Check your API key.");
-                
-                const data = await geminiResponse.json();
-                const scriptText = data.candidates[0].content.parts[0].text.trim();
-                scriptBox.value = scriptText;
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' }); //
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); //
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `Phonk_Remix_${Date.now()}.webm`; //
+                a.click();
+                URL.revokeObjectURL(url); //
+                recordedChunks = [];
+                statusTxt.innerText = "Video Downloaded Successfully!";
+            };
 
-                // STEP 2: Synthesize Multi-Character Speech
-                status.innerText = "2/3: Synthesizing character voice lines...";
-                const lines = scriptText.split('\n').filter(l => l.trim().length > 0);
-                const audioBuffers = [];
-
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i];
-                    const isB = line.toUpperCase().startsWith('B:');
-                    const voice = isB ? voiceB : voiceA;
-                    
-                    // Clean up the text by removing the "A:" or "B:" label before sending to TTS
-                    const text = line.replace(/^[A-Z*]+:\s*/i, '').replace(/[\*"]/g, '').trim();
-
-                    if (!text) continue;
-
-                    status.innerText = `2/3: Rendering voice for line ${i + 1} of ${lines.length}...`;
-
-                    const ttsUrl = `https://api.streamelements.com/kappa/v2/speech?voice=${voice}&text=${encodeURIComponent(text)}`;
-                    const response = await fetch(ttsUrl);
-                    
-                    if (!response.ok) throw new Error("TTS voice generation failed.");
-
-                    const arrayBuffer = await response.arrayBuffer();
-                    audioBuffers.push(arrayBuffer);
-                }
-
-                // STEP 3: Stitch Audio Buffers
-                status.innerText = "3/3: Stitching audio clips together...";
-                const mergedWavUrl = await mergeAudioBuffers(audioBuffers);
-
-                // Display Audio Element
-                const audioPlayer = new Audio(mergedWavUrl);
-                audioPlayer.controls = true;
-                document.getElementById('audioOutput').innerHTML = '';
-                document.getElementById('audioOutput').appendChild(audioPlayer);
-
-                // Auto Download Audio
-                status.innerText = "Complete! Downloading audio file...";
-                const link = document.createElement('a');
-                link.href = mergedWavUrl;
-                link.download = `shorts_audio_${Date.now()}.wav`;
-                link.click();
-
-                audioPlayer.play();
-
-            } catch (err) {
-                alert("Error: " + err.message);
-            } finally {
-                btn.disabled = false;
-                setTimeout(() => { status.style.display = 'none'; }, 4000);
-            }
-        }
-
-        // Web Audio API buffer merger
-        async function mergeAudioBuffers(arrayBuffers) {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const decodedBuffers = await Promise.all(
-                arrayBuffers.map(buf => audioCtx.decodeAudioData(buf))
-            );
-
-            const totalLength = decodedBuffers.reduce((acc, buf) => acc + buf.length, 0);
-            const outputBuffer = audioCtx.createBuffer(1, totalLength, audioCtx.sampleRate);
-
-            let offset = 0;
-            const channelData = outputBuffer.getChannelData(0);
-            for (const buf of decodedBuffers) {
-                channelData.set(buf.getChannelData(0), offset);
-                offset += buf.length;
-            }
-
-            return bufferToWaveUrl(outputBuffer, totalLength);
-        }
-
-        function bufferToWaveUrl(abuffer, len) {
-            let numOfChan = abuffer.numberOfChannels,
-                length = len * numOfChan * 2 + 44,
-                buffer = new ArrayBuffer(length),
-                view = new DataView(buffer),
-                channels = [], i, sample, offset = 0, pos = 0;
-
-            function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
-            function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
-
-            setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157);
-            setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan);
-            setUint32(abuffer.sampleRate); setUint32(abuffer.sampleRate * 2 * numOfChan);
-            setUint16(numOfChan * 2); setUint16(16); setUint32(0x61746164); setUint32(length - pos - 4);
-
-            for (i = 0; i < abuffer.numberOfChannels; i++) channels.push(abuffer.getChannelData(i));
-
-            while (offset < len) {
-                for (i = 0; i < numOfChan; i++) {
-                    sample = Math.max(-1, Math.min(1, channels[i][offset]));
-                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
-                    view.setInt16(pos, sample, true); pos += 2;
-                }
-                offset++;
-            }
-
-            const blob = new Blob([buffer], { type: "audio/wav" });
-            return URL.createObjectURL(blob);
-        }
+            mediaRecorder.start(); //
+            btnRecord.innerText = "⏹️ Stop & Save Video";
+            btnRecord.style.background = "#eab308";
+            statusTxt.innerText = "Recording... Play around with the audio effects!";
+        });
     </script>
 </body>
 </html>
