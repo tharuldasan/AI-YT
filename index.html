@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA // V3 AUTOMATED SHORTS ENGINE</title>
+    <title>AURA // V4 AUTOMATED SHORTS ENGINE</title>
     <style>
         :root {
             --bg: #05070f; --card: #0d111d; --primary: #00f0ff;
@@ -33,7 +33,7 @@
         .canvas-container {
             background: #000; border-radius: 12px; overflow: hidden;
             border: 2px solid var(--border); width: 360px; height: 640px; 
-            position: relative; box-shadow: 0 0 40px rgba(0, 240, 255, 0.2);
+            position: relative; box-shadow: 0 0 50px rgba(0, 240, 255, 0.15);
         }
         canvas { width: 100%; height: 100%; display: block; }
         button {
@@ -47,14 +47,16 @@
         button.record { background: linear-gradient(135deg, #ff0055, #ff0000); color: white; }
         button:disabled { background: #334155; color: #64748b; cursor: not-allowed; transform: none; }
         .file-inputs { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); }
+        .color-group { display: flex; gap: 10px; }
+        .color-group div { flex: 1; }
         .value-display { font-size: 12px; color: var(--primary); float: right; }
     </style>
 </head>
 <body>
 
     <div class="panel">
-        <h1>⚡ AURA ENGINE V3</h1>
-        <div class="subtitle">CRISP VIZZY SPECTRUM & KINETIC CAMERA</div>
+        <h1>⚡ AURA ENGINE V4</h1>
+        <div class="subtitle">SMOOTH MIRRORED SPECTRUM & KINETIC BASS</div>
         
         <label>1. Search Song Online (Auto-Fetches Official BG):</label>
         <div class="search-group">
@@ -63,14 +65,19 @@
         </div>
 
         <div class="file-inputs">
-            <label>Main Theme Color:</label>
-            <input type="color" id="themeColor" value="#00f0ff">
+            <div class="color-group">
+                <div>
+                    <label>Outer Glow Color:</label>
+                    <input type="color" id="themeColor" value="#00f0ff">
+                </div>
+                <div>
+                    <label>Inner Fill Color:</label>
+                    <input type="color" id="innerColor" value="#000000">
+                </div>
+            </div>
             
             <label>Playback Speed (Slowed): <span class="value-display" id="speedVal">1.0x</span></label>
             <input type="range" id="speedSlider" min="0.5" max="1.5" step="0.05" value="1.0">
-
-            <label>Audio Start Offset (Seconds): <span class="value-display" id="offsetVal">0s</span></label>
-            <input type="range" id="offsetSlider" min="0" max="180" step="1" value="0">
             
             <label>Inner Logo Picture Size: <span class="value-display" id="logoSizeVal">240px</span></label>
             <input type="range" id="logoSizeSlider" min="100" max="400" step="10" value="240">
@@ -106,8 +113,8 @@
         
         let particles = [];
         let themeColor = "#00f0ff";
+        let innerColor = "#000000";
         let innerLogoSize = 240;
-        let startOffset = 0;
 
         // Web Audio
         let audioCtx, source, analyser, gainNode, mediaDest;
@@ -125,17 +132,16 @@
         const recordBtn = document.getElementById('recordBtn');
         const speedSlider = document.getElementById('speedSlider');
         const logoSizeSlider = document.getElementById('logoSizeSlider');
-        const offsetSlider = document.getElementById('offsetSlider');
 
-        // Init Particles 
-        for(let i = 0; i < 60; i++) {
+        // Init Dust Particles for depth
+        for(let i = 0; i < 75; i++) {
             particles.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
-                size: Math.random() * 6 + 2, 
-                speedY: Math.random() * -4 - 2,
-                speedX: Math.random() * 2 - 1,
-                opacity: Math.random()
+                size: Math.random() * 4 + 1, 
+                speedY: Math.random() * -2 - 1,
+                speedX: (Math.random() - 0.5) * 1.5,
+                opacity: Math.random() * 0.5 + 0.1
             });
         }
 
@@ -145,14 +151,13 @@
             document.documentElement.style.setProperty('--primary', themeColor);
         });
         
+        document.getElementById('innerColor').addEventListener('input', (e) => {
+            innerColor = e.target.value;
+        });
+        
         speedSlider.addEventListener('input', (e) => {
             document.getElementById('speedVal').innerText = e.target.value + 'x';
             if (source) source.playbackRate.value = e.target.value;
-        });
-
-        offsetSlider.addEventListener('input', (e) => {
-            startOffset = parseInt(e.target.value);
-            document.getElementById('offsetVal').innerText = startOffset + 's';
         });
 
         logoSizeSlider.addEventListener('input', (e) => {
@@ -222,7 +227,8 @@
 
             analyser = audioCtx.createAnalyser();
             analyser.fftSize = 256; 
-            analyser.smoothingTimeConstant = 0.8; 
+            // Extreme smoothing for that fluid Vizzy look
+            analyser.smoothingTimeConstant = 0.88; 
 
             mediaDest = audioCtx.createMediaStreamDestination();
 
@@ -242,8 +248,7 @@
                 recordBtn.disabled = true;
             } else {
                 setupAudio();
-                // Apply the start offset here
-                source.start(0, startOffset);
+                source.start(0);
                 startTime = audioCtx.currentTime;
                 isPlaying = true;
                 playBtn.innerText = "⏸️ STOP AUDIO";
@@ -252,13 +257,29 @@
             }
         });
 
+        // Smooth Bezier Curve Drawing Function
+        function drawSmoothCurve(ctx, points) {
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            
+            for (let i = 0; i < points.length; i++) {
+                let p = points[i];
+                let nextP = points[(i + 1) % points.length];
+                // Calculate midpoint to act as a smooth anchor
+                let xc = (p.x + nextP.x) / 2;
+                let yc = (p.y + nextP.y) / 2;
+                ctx.quadraticCurveTo(p.x, p.y, xc, yc);
+            }
+            ctx.closePath();
+        }
+
         function renderFrame() {
             if (!isPlaying) return;
             requestAnimationFrame(renderFrame);
 
             let elapsed = audioCtx.currentTime - startTime;
             let currentSpeed = parseFloat(speedSlider.value);
-            let actualDuration = (audioBuffer.duration - startOffset) / currentSpeed;
+            let actualDuration = audioBuffer.duration / currentSpeed;
             
             let fadeAlpha = 1;
             if (elapsed < 1.5) fadeAlpha = elapsed / 1.5; 
@@ -277,11 +298,13 @@
             const dataArray = new Uint8Array(bufferLength);
             analyser.getByteFrequencyData(dataArray);
 
+            // BASS ISOLATION: Average only the lowest frequencies (bins 0 to 4)
             let bassSum = 0;
             for(let i = 0; i < 5; i++) bassSum += dataArray[i];
             let bassIntensity = bassSum / 5; 
-            // Aggressive kick threshold for the "Superlative Boom"
-            let kick = bassIntensity > 210 ? (bassIntensity - 210) / 45 : 0; 
+            
+            // STRICT SHAKE TRIGGER: Only happens on hard kicks
+            let kick = bassIntensity > 220 ? (bassIntensity - 220) / 35 : 0; 
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.globalAlpha = fadeAlpha;
@@ -289,20 +312,19 @@
             const cx = canvas.width / 2;
             const cy = canvas.height / 2;
 
-            // 1. Camera Shake AND Rotation (Translational + Rotational Kinetic effect)
+            // 1. Kinetic Camera Shake (Translational + Rotational tied strictly to kick)
             ctx.save();
-            let shakeX = (Math.random() - 0.5) * kick * 40;
-            let shakeY = (Math.random() - 0.5) * kick * 40;
-            let rotationAngle = (Math.random() - 0.5) * kick * 0.04; // Slight tilt
+            let shakeX = (Math.random() - 0.5) * kick * 60;
+            let shakeY = (Math.random() - 0.5) * kick * 60;
+            let rotationAngle = (Math.random() - 0.5) * kick * 0.05; 
             
             ctx.translate(cx + shakeX, cy + shakeY);
             ctx.rotate(rotationAngle);
             ctx.translate(-cx, -cy);
 
-            // 2. Background Drawing
+            // 2. Background Drawing (Scaled up to cover edges during shake)
             if (bgImg.src && bgImg.complete) {
-                // Scale up slightly to hide edges during heavy camera shake/rotation
-                let scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height) * 1.1;
+                let scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height) * 1.15;
                 let x = (canvas.width / 2) - (bgImg.width / 2) * scale;
                 let y = (canvas.height / 2) - (bgImg.height / 2) * scale;
                 ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
@@ -311,82 +333,95 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // 3. Dynamic Color Tint Overlay (Pulses with bass)
+            // 3. Cinematic Vignette & Color Bleed Layer
+            let grad = ctx.createRadialGradient(cx, cy, 300, cx, cy, 1200);
+            grad.addColorStop(0, "transparent");
+            grad.addColorStop(1, "rgba(0,0,0,0.85)");
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Pulse color overlay on beat
             ctx.fillStyle = themeColor;
             ctx.globalCompositeOperation = "overlay";
-            ctx.globalAlpha = 0.4 + (kick * 0.4);
+            ctx.globalAlpha = (kick * 0.5) * fadeAlpha;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.globalCompositeOperation = "source-over";
             ctx.globalAlpha = fadeAlpha;
 
-            // 4. Particles Engine
+            // 4. Floating Dust Particles
             ctx.fillStyle = themeColor;
             for(let p of particles) {
-                p.y += p.speedY - (kick * 6);
+                p.y += p.speedY - (kick * 8);
                 p.x += p.speedX;
                 if(p.y < 0) p.y = canvas.height + p.size;
                 if(p.x < 0 || p.x > canvas.width) p.x = Math.random() * canvas.width;
 
                 ctx.globalAlpha = p.opacity * fadeAlpha;
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size + (kick * 2), 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, p.size + (kick * 3), 0, Math.PI * 2);
                 ctx.fill();
             }
             ctx.globalAlpha = fadeAlpha;
 
-            // 5. Crisp Vizzy Style Spectrum
-            const spectrumBaseRadius = 250; // Locked size for the spectrum ring
-            const numBars = 64; // Number of discrete lines
+            // 5. Smooth, Solid Mirrored Spectrum Shape
+            const spectrumBaseRadius = 250; 
+            const numPoints = 40; // Number of points per half
+            let points = [];
 
-            // Draw center black circle backing
-            ctx.beginPath();
-            ctx.arc(cx, cy, spectrumBaseRadius - 2, 0, Math.PI * 2);
-            ctx.fillStyle = "#000000";
+            // Calculate points: Top to Bottom (Right Side)
+            for(let i = 0; i <= numPoints; i++) {
+                let val = dataArray[i]; // Grab frequency
+                let height = (val / 255) * 160 * (1 + kick * 0.3); // Map to pixel height
+                let r = spectrumBaseRadius + height;
+                let angle = -Math.PI / 2 + (i / numPoints) * Math.PI; // -90 to 90 degrees
+                points.push({
+                    x: cx + Math.cos(angle) * r,
+                    y: cy + Math.sin(angle) * r
+                });
+            }
+
+            // Calculate points: Bottom to Top (Left Side - MIRRORED)
+            for(let i = numPoints - 1; i >= 0; i--) {
+                let val = dataArray[i]; // Use exactly the same data for perfect mirror
+                let height = (val / 255) * 160 * (1 + kick * 0.3);
+                let r = spectrumBaseRadius + height;
+                let angle = Math.PI / 2 + ((numPoints - i) / numPoints) * Math.PI; // 90 to 270 degrees
+                points.push({
+                    x: cx + Math.cos(angle) * r,
+                    y: cy + Math.sin(angle) * r
+                });
+            }
+
+            // Draw the customized filled shape
+            drawSmoothCurve(ctx, points);
+            
+            // Set Inner Fill Color
+            ctx.fillStyle = innerColor;
             ctx.fill();
 
-            // Draw crisp glowing bars facing outward
-            for (let i = 0; i < numBars; i++) {
-                // Mirror the data so left and right sides are symmetrical
-                let dataIndex = i < (numBars / 2) ? i : (numBars - i - 1);
-                // Boost the visual height significantly for the boom effect
-                let barHeight = (dataArray[dataIndex] / 255) * 180 * (1 + kick * 0.5); 
-                
-                let angle = (i * (Math.PI * 2)) / numBars;
-                let x1 = cx + Math.cos(angle) * spectrumBaseRadius;
-                let y1 = cy + Math.sin(angle) * spectrumBaseRadius;
-                let x2 = cx + Math.cos(angle) * (spectrumBaseRadius + barHeight);
-                let y2 = cy + Math.sin(angle) * (spectrumBaseRadius + barHeight);
-
-                ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
-                
-                ctx.strokeStyle = themeColor;
-                ctx.lineWidth = 6;
-                ctx.lineCap = "round";
-                
-                // Add Glow to the strokes
-                ctx.shadowBlur = 15 + (kick * 20);
-                ctx.shadowColor = themeColor;
-                ctx.stroke();
-            }
-            ctx.shadowBlur = 0; // reset glow
+            // Set Outer Glowing Line Color
+            ctx.strokeStyle = themeColor;
+            ctx.lineWidth = 6 + (kick * 4);
+            ctx.shadowBlur = 25 + (kick * 30);
+            ctx.shadowColor = themeColor;
+            ctx.stroke();
+            ctx.shadowBlur = 0; // Reset glow
 
             // 6. Draw Independent Inner Logo
             if (logoImg.src && logoImg.complete && logoImg.naturalWidth !== 0) {
                 // Size controlled exclusively by the slider, plus a tiny bass pump
-                let currentLogoSize = innerLogoSize + (kick * 15); 
+                let currentLogoSize = innerLogoSize + (kick * 10); 
                 
                 ctx.save();
                 ctx.beginPath();
-                // Ensure the image never bleeds outside the black base circle
-                ctx.arc(cx, cy, spectrumBaseRadius - 5, 0, Math.PI * 2); 
+                // Ensure the image never bleeds outside the base spectrum circle
+                ctx.arc(cx, cy, spectrumBaseRadius - 2, 0, Math.PI * 2); 
                 ctx.clip();
                 ctx.drawImage(logoImg, cx - currentLogoSize/2, cy - currentLogoSize/2, currentLogoSize, currentLogoSize);
                 ctx.restore();
             }
 
-            ctx.restore(); // Restore camera shake/rotation matrix
+            ctx.restore(); // Restore camera matrix
         }
 
         // Recording Functionality
