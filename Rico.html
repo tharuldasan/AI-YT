@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puter AI Shorts Generator</title>
+    <!-- Puter.js CDN -->
+    <script src="https://js.puter.com/v2/"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 650px; margin: 40px auto; padding: 20px; line-height: 1.6; background-color: #f9f9f9; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        button { padding: 12px 20px; font-size: 16px; font-weight: bold; cursor: pointer; background: #0070f3; color: white; border: none; border-radius: 6px; width: 100%; transition: 0.2s; }
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+        textarea, input { width: 100%; padding: 10px; margin: 8px 0 16px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        textarea { height: 100px; resize: vertical; }
+        audio { width: 100%; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>🎬 Puter AI - Script & Voice Engine</h2>
+
+    <div class="card">
+        <label for="topic"><strong>1. Enter Short Topic or Joke Idea:</strong></label>
+        <input type="text" id="topic" value="Studying for exams at 2 AM on red bull">
+
+        <button id="generateBtn" onclick="runPipeline()">⚡ Generate Script & ElevenLabs Voice</button>
+    </div>
+
+    <div class="card">
+        <label for="scriptOutput"><strong>2. Generated Script (GPT-4o):</strong></label>
+        <textarea id="scriptOutput" placeholder="Your script will show here..."></textarea>
+    </div>
+
+    <div class="card">
+        <label><strong>3. Audio Preview (ElevenLabs):</strong></label>
+        <div id="audioPlayer">Audio will load here...</div>
+    </div>
+
+    <script>
+        async function runPipeline() {
+            const topic = document.getElementById('topic').value;
+            const btn = document.getElementById('generateBtn');
+            const scriptBox = document.getElementById('scriptOutput');
+            const audioPlayer = document.getElementById('audioPlayer');
+
+            btn.disabled = true;
+            btn.innerText = "Generating Script (GPT-4o)...";
+
+            try {
+                // Step 1: Generate Script with GPT-4o
+                const prompt = `Write a hilarious, 15-second relatable short dialogue or monologue about "${topic}" for a 2D animated meme video. Keep it ultra-short (under 30 words), funny, and energetic. Output ONLY the spoken words with no stage directions or quotes.`;
+                
+                const chatResponse = await puter.ai.chat(prompt, { model: "openai/gpt-4o" });
+                const scriptText = chatResponse.message.content.trim();
+                scriptBox.value = scriptText;
+
+                btn.innerText = "Generating ElevenLabs Voiceover...";
+
+                // Step 2: Convert Script to Audio via ElevenLabs using Puter.js
+                const audio = await puter.ai.txt2speech(scriptText, {
+                    provider: "elevenlabs",
+                    voice: "21m00Tcm4TlvDq8ikWAM", // Rachel / default sample voice
+                    model: "eleven_multilingual_v2"
+                });
+
+                // Display audio element with playback controls
+                audioPlayer.innerHTML = '';
+                audio.controls = true;
+                audioPlayer.appendChild(audio);
+                
+                // Play automatically
+                audio.play();
+
+            } catch (error) {
+                console.error(error);
+                alert("Error: " + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "⚡ Generate Script & ElevenLabs Voice";
+            }
+        }
+    </script>
+</body>
+</html>
