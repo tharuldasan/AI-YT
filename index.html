@@ -3,151 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ Fully Automated YouTube Shorts Audio Engine</title>
-    <!-- Puter.js CDN -->
-    <script src="https://js.puter.com/v2/"></script>
+    <title>⚡ Free Automated Shorts Engine</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; background-color: #0f172a; color: #f8fafc; }
-        .card { background: #1e293b; padding: 24px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-        h2 { margin-top: 0; color: #38bdf8; }
-        button { padding: 16px; font-size: 18px; font-weight: bold; cursor: pointer; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 8px; width: 100%; transition: all 0.2s; }
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #3b82f6;
+            --accent: #10b981;
+            --text: #f8fafc;
+            --border: #334155;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            max-width: 750px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.5;
+        }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        h1 { color: #38bdf8; margin-top: 0; font-size: 24px; text-align: center; }
+        label { display: block; margin-top: 12px; font-weight: 600; font-size: 14px; color: #94a3b8; }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: #fff;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        textarea { height: 120px; resize: vertical; }
+        .row { display: flex; gap: 12px; }
+        button {
+            width: 100%;
+            padding: 16px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, var(--primary), #2563eb);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
         button:hover { opacity: 0.9; transform: translateY(-1px); }
         button:disabled { background: #64748b; cursor: not-allowed; transform: none; }
-        textarea, select, input { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid #475569; border-radius: 8px; background: #0f172a; color: #fff; box-sizing: border-box; font-size: 14px; }
-        textarea { height: 120px; resize: vertical; }
-        .status-box { margin-top: 15px; padding: 12px; background: #0284c7; border-radius: 6px; font-weight: bold; text-align: center; display: none; }
-        .row { display: flex; gap: 12px; }
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            background: #0284c7;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+        }
         audio { width: 100%; margin-top: 15px; }
     </style>
 </head>
 <body>
 
-    <h2>🚀 Automated Animated Shorts Engine</h2>
+    <h1>🚀 Automated Shorts Script & Voice Engine</h1>
 
     <div class="card">
-        <label for="topic"><strong>1. Joke Idea / Short Scenario:</strong></label>
-        <input type="text" id="topic" value="Student caught using ChatGPT during O/L examination">
+        <label for="topic">1. Video Concept / Joke Topic:</label>
+        <input type="text" id="topic" value="Student caught using ChatGPT during O/L exam">
 
         <div class="row">
-            <div style="flex: 1;">
-                <label for="voiceA"><strong>Teacher Voice:</strong></label>
+            <div style="flex:1;">
+                <label for="voiceA">Teacher Voice (Character A):</label>
                 <select id="voiceA">
-                    <option value="pNInz6obpgDQGcFmaJgB">Adam (Deep Angry/Serious)</option>
-                    <option value="JBFqnCBsd6RMkjVDRZzb">George (Panicked Screaming)</option>
+                    <option value="Brian">Brian (Meme British Male)</option>
+                    <option value="Matthew">Matthew (Serious US Male)</option>
+                    <option value="Joey">Joey (Casual Male)</option>
                 </select>
             </div>
-            <div style="flex: 1;">
-                <label for="voiceB"><strong>Student Voice:</strong></label>
+            <div style="flex:1;">
+                <label for="voiceB">Student Voice (Character B):</label>
                 <select id="voiceB">
-                    <option value="cgSgspJ2msm6clMCkdW9">Jessica (High Pitch Sarcastic)</option>
-                    <option value="21m00Tcm4TlvDq8ikWAM">Rachel (Calm Funny)</option>
+                    <option value="Justin">Justin (Kid / High Pitch)</option>
+                    <option value="Ivy">Ivy (Female Voice)</option>
+                    <option value="Amy">Amy (British Female)</option>
                 </select>
             </div>
         </div>
 
-        <button id="mainBtn" onclick="runFullAutomation()">⚡ ONE-CLICK GENERATE & DOWNLOAD AUDIO</button>
-        
-        <div id="statusBox" class="status-box"></div>
+        <button id="generateBtn" onclick="runPipeline()">⚡ Fully Generate Script & Audio File</button>
+        <div id="status" class="status"></div>
     </div>
 
     <div class="card">
-        <label for="scriptOutput"><strong>Generated Script (GPT-4o):</strong></label>
-        <textarea id="scriptOutput" readonly placeholder="Script will generate automatically..."></textarea>
-        
-        <label><strong>Final Combined Voiceover Preview:</strong></label>
-        <div id="audioContainer">Audio preview will load here...</div>
+        <label for="script">2. AI-Generated Dialogue (Editable):</label>
+        <textarea id="script" placeholder="AI script will populate automatically..."></textarea>
+
+        <label>3. Final Stitched Audio Preview:</label>
+        <div id="audioOutput">Your audio file will appear here...</div>
     </div>
 
     <script>
-        async function runFullAutomation() {
+        async function runPipeline() {
+            const btn = document.getElementById('generateBtn');
+            const status = document.getElementById('status');
             const topic = document.getElementById('topic').value;
             const voiceA = document.getElementById('voiceA').value;
             const voiceB = document.getElementById('voiceB').value;
-            
-            const btn = document.getElementById('mainBtn');
-            const statusBox = document.getElementById('statusBox');
-            const scriptBox = document.getElementById('scriptOutput');
-            const audioContainer = document.getElementById('audioContainer');
+            const scriptBox = document.getElementById('script');
 
             btn.disabled = true;
-            statusBox.style.display = 'block';
+            status.style.display = 'block';
 
             try {
-                // STEP 1: Generate dialogue via GPT-4o
-                updateStatus("1/4: Generating fast-paced dialogue (GPT-4o)...");
-                const prompt = `Write an ultra-short, hilarious 2-character dialogue (under 25 words total) about: "${topic}".
-                Format strict rules:
-                Line 1 MUST start with "A: "
-                Line 2 MUST start with "B: "
-                Line 3 (optional) MUST start with "A: " or "B: "
-                No other text, markdown, or stage directions.`;
-
-                const chatResponse = await puter.ai.chat(prompt, { model: "openai/gpt-4o" });
-                const scriptText = chatResponse.message.content.trim();
+                // STEP 1: Generate AI Script (Pollinations AI Public Endpoint - No Key Required)
+                status.innerText = "1/3: Writing meme script via AI...";
+                const promptText = `Write an ultra-short, hilarious 2-character dialogue (under 25 words total) about: "${topic}". Rules: Line 1 MUST start with "A: ", Line 2 MUST start with "B: ", Line 3 MUST start with "A: ". No other text or quotes.`;
+                
+                const aiResponse = await fetch(`https://text.pollinations.ai/${encodeURIComponent(promptText)}`);
+                const scriptText = (await aiResponse.text()).trim();
                 scriptBox.value = scriptText;
 
-                // STEP 2: Generate character voice audio files via ElevenLabs
-                updateStatus("2/4: Synthesizing ElevenLabs character voices...");
-                const lines = scriptText.split('\n').filter(line => line.trim().length > 0);
+                // STEP 2: Synthesize Multi-Character Speech
+                status.innerText = "2/3: Synthesizing character voice lines...";
+                const lines = scriptText.split('\n').filter(l => l.trim().length > 0);
                 const audioBuffers = [];
 
                 for (let i = 0; i < lines.length; i++) {
                     const line = lines[i];
-                    let voiceId = line.toUpperCase().startsWith('B:') ? voiceB : voiceA;
-                    let text = line.replace(/^[AB]:\s*/i, '').trim();
+                    const isB = line.toUpperCase().startsWith('B:');
+                    const voice = isB ? voiceB : voiceA;
+                    const text = line.replace(/^[AB]:\s*/i, '').trim();
 
                     if (!text) continue;
 
-                    updateStatus(`2/4: Generating voice for Line ${i + 1}/${lines.length}...`);
+                    status.innerText = `2/3: Rendering voice for line ${i + 1} of ${lines.length}...`;
 
-                    const audioElem = await puter.ai.txt2speech(text, {
-                        provider: "elevenlabs",
-                        voice: voiceId,
-                        model: "eleven_multilingual_v2"
-                    });
+                    const ttsUrl = `https://api.streamelements.com/kappa/v2/speech?voice=${voice}&text=${encodeURIComponent(text)}`;
+                    const response = await fetch(ttsUrl);
+                    
+                    if (!response.ok) throw new Error("TTS voice generation failed.");
 
-                    const response = await fetch(audioElem.src);
                     const arrayBuffer = await response.arrayBuffer();
                     audioBuffers.push(arrayBuffer);
                 }
 
-                // STEP 3: Stitch character audio clips seamlessly into one WAV
-                updateStatus("3/4: Stitching audio buffers into single file...");
-                const stitchedWavUrl = await mergeAudioBuffers(audioBuffers);
+                // STEP 3: Stitch Audio Buffers
+                status.innerText = "3/3: Stitching audio clips together...";
+                const mergedWavUrl = await mergeAudioBuffers(audioBuffers);
 
                 // Display Audio Element
-                audioContainer.innerHTML = '';
-                const finalAudio = new Audio(stitchedWavUrl);
-                finalAudio.controls = true;
-                finalAudio.playbackRate = 1.25; // Apply cartoon speed shift
-                audioContainer.appendChild(finalAudio);
+                const audioPlayer = new Audio(mergedWavUrl);
+                audioPlayer.controls = true;
+                document.getElementById('audioOutput').innerHTML = '';
+                document.getElementById('audioOutput').appendChild(audioPlayer);
 
-                // STEP 4: Auto-download the finished file
-                updateStatus("4/4: Downloading audio file automatically!");
-                triggerDownload(stitchedWavUrl, `short_voiceover_${Date.now()}.wav`);
+                // Auto Download Audio
+                status.innerText = "Complete! Downloading audio file...";
+                const link = document.createElement('a');
+                link.href = mergedWavUrl;
+                link.download = `shorts_audio_${Date.now()}.wav`;
+                link.click();
 
-                finalAudio.play();
+                audioPlayer.play();
 
-            } catch (error) {
-                console.error(error);
-                alert("Execution Error: " + error.message);
+            } catch (err) {
+                alert("Error: " + err.message);
             } finally {
                 btn.disabled = false;
-                setTimeout(() => { statusBox.style.display = 'none'; }, 5000);
+                setTimeout(() => { status.style.display = 'none'; }, 4000);
             }
-        }
-
-        function updateStatus(msg) {
-            document.getElementById('statusBox').innerText = msg;
-        }
-
-        function triggerDownload(url, filename) {
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
         }
 
         // Web Audio API buffer merger
