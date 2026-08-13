@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRO 3D WEBGL SPECTRUM</title>
+    <title>AURA // BASS-MAINED MIRRORED SPECTRUM</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -16,23 +16,30 @@
             align-items: center;
             height: 100vh;
         }
-        #canvas-container {
-            width: 100vw;
-            height: 100vh;
+        
+        /* Container strictly locked to 1080x1920 vertical aspect ratio */
+        #canvas-wrapper {
+            width: 1080px;
+            height: 1920px;
+            transform-origin: center center;
             position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
+            box-shadow: 0 0 80px rgba(0, 240, 255, 0.1);
         }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+
         .ui-overlay {
             position: absolute;
-            bottom: 30px;
+            bottom: 40px;
             z-index: 10;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 12px;
-            background: rgba(10, 10, 20, 0.75);
+            background: rgba(10, 10, 20, 0.85);
             padding: 20px 30px;
             border-radius: 16px;
             backdrop-filter: blur(12px);
@@ -78,10 +85,13 @@
 </head>
 <body>
 
-    <div id="canvas-container"></div>
+    <!-- Scalable wrapper enforcing exact resolution -->
+    <div id="canvas-wrapper">
+        <div id="canvas-container"></div>
+    </div>
 
     <div class="ui-overlay">
-        <div class="info" id="track-info">AURA // 3D WEBGL SPECTRUM</div>
+        <div class="info" id="track-info">AURA // BASS-MAINED MIRROR</div>
         <div class="controls">
             <label class="file-btn">
                 📁 LOAD LOCAL MP3
@@ -92,26 +102,40 @@
     </div>
 
     <script>
-        // --- 1. SCENE SETUP ---
+        // --- 1. WINDOW SCALING LOGIC (Keeps 1080x1920 strictly intact) ---
+        const RENDER_WIDTH = 1080;
+        const RENDER_HEIGHT = 1920;
+        const wrapper = document.getElementById('canvas-wrapper');
+
+        function resizeWrapper() {
+            // Scale the wrapper to fit inside the browser window while maintaining the true resolution internally
+            const scale = Math.min(window.innerWidth / RENDER_WIDTH, window.innerHeight / RENDER_HEIGHT) * 0.95;
+            wrapper.style.transform = `scale(${scale})`;
+        }
+        window.addEventListener('resize', resizeWrapper);
+        resizeWrapper();
+
+        // --- 2. SCENE SETUP ---
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
         scene.fog = new THREE.FogExp2(0x030308, 0.002);
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        // Aspect ratio strictly locked
+        const camera = new THREE.PerspectiveCamera(60, RENDER_WIDTH / RENDER_HEIGHT, 0.1, 1000);
         camera.position.set(0, 0, 18);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        // Renderer strictly bound to 1080x1920
+        renderer.setSize(RENDER_WIDTH, RENDER_HEIGHT);
+        renderer.setPixelRatio(2); // High DPI for crisp edges
         container.appendChild(renderer.domElement);
 
-        // --- 2. AUDIO PIPELINE ---
+        // --- 3. AUDIO PIPELINE ---
         let audioCtx, analyser, dataArray, source;
         let isPlaying = false;
 
         const audio = new Audio();
         audio.crossOrigin = "anonymous";
-        // Reliable fallback audio stream
         audio.src = "https://actions.google.com/sounds/v1/science_fiction/electronic_circuit_loop.ogg";
 
         function initAudio() {
@@ -119,7 +143,7 @@
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioCtx.createAnalyser();
             analyser.fftSize = 512;
-            analyser.smoothingTimeConstant = 0.82;
+            analyser.smoothingTimeConstant = 0.85; // Heavy smoothing for that liquid bass flow
 
             source = audioCtx.createMediaElementSource(audio);
             source.connect(analyser);
@@ -128,29 +152,42 @@
             dataArray = new Uint8Array(analyser.frequencyBinCount);
         }
 
-        // --- 3. SPECTRUM MESH CREATION ---
-        const BARS_COUNT = 120;
-        const RADIUS = 5.5;
+        // --- 4. SPECTRUM MESH CREATION (TRUE MIRROR, NO ROTATION) ---
+        const BARS_HALF = 64; // 64 bars on right, 64 on left
+        const RADIUS = 6;
         const barsGroup = new THREE.Group();
         scene.add(barsGroup);
 
-        const barGeometry = new THREE.BoxGeometry(0.08, 1, 0.08);
-        const barMeshes = [];
+        const barGeometry = new THREE.BoxGeometry(0.12, 1, 0.12);
+        const barPairs = []; // Store right/left pairs together
 
-        for (let i = 0; i < BARS_COUNT; i++) {
-            const angle = (i / BARS_COUNT) * Math.PI * 2;
-            const hue = (i / BARS_COUNT) * 0.4 + 0.5;
+        for (let i = 0; i < BARS_HALF; i++) {
+            // Map angle from -90 deg (Bottom) to +90 deg (Top)
+            const progress = i / (BARS_HALF - 1); 
+            const angleRight = -Math.PI / 2 + (progress * Math.PI); 
+            const angleLeft = -Math.PI / 2 - (progress * Math.PI); 
+
+            // Color gradient (Cyan at the bass/bottom, Purple at the highs/top)
+            const hue = progress * 0.4 + 0.5;
             const color = new THREE.Color().setHSL(hue, 1.0, 0.5);
-
             const mat = new THREE.MeshBasicMaterial({ color: color });
-            const mesh = new THREE.Mesh(barGeometry, mat);
-            
-            mesh.position.x = Math.cos(angle) * RADIUS;
-            mesh.position.y = Math.sin(angle) * RADIUS;
-            mesh.rotation.z = angle - Math.PI / 2;
 
-            barsGroup.add(mesh);
-            barMeshes.push(mesh);
+            // Right Bar
+            const meshRight = new THREE.Mesh(barGeometry, mat);
+            meshRight.position.x = Math.cos(angleRight) * RADIUS;
+            meshRight.position.y = Math.sin(angleRight) * RADIUS;
+            meshRight.rotation.z = angleRight; // Point perfectly outward
+
+            // Left Bar (Mirrored)
+            const meshLeft = new THREE.Mesh(barGeometry, mat);
+            meshLeft.position.x = Math.cos(angleLeft) * RADIUS;
+            meshLeft.position.y = Math.sin(angleLeft) * RADIUS;
+            meshLeft.rotation.z = angleLeft; // Point perfectly outward
+
+            barsGroup.add(meshRight);
+            barsGroup.add(meshLeft);
+            
+            barPairs.push({ right: meshRight, left: meshLeft });
         }
 
         // Center Black Core
@@ -160,32 +197,30 @@
         coreMesh.position.z = -0.1;
         barsGroup.add(coreMesh);
 
-        // Outer Ring
+        // Center Outer Glow Ring
         const ringGeo = new THREE.RingGeometry(RADIUS - 0.05, RADIUS + 0.05, 64);
         const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide });
         const ringMesh = new THREE.Mesh(ringGeo, ringMat);
         ringMesh.position.z = 0.05;
         barsGroup.add(ringMesh);
 
-        // --- 4. PARTICLES ---
-        const particleCount = 500;
+        // --- 5. BACKGROUND PARTICLES (Flowing upwards) ---
+        const particleCount = 600;
         const particleGeo = new THREE.BufferGeometry();
         const particlePositions = new Float32Array(particleCount * 3);
 
         for(let i = 0; i < particleCount * 3; i += 3) {
-            particlePositions[i] = (Math.random() - 0.5) * 40;
-            particlePositions[i+1] = (Math.random() - 0.5) * 40;
-            particlePositions[i+2] = (Math.random() - 0.5) * 20 - 5;
+            particlePositions[i] = (Math.random() - 0.5) * 50;
+            particlePositions[i+1] = (Math.random() - 0.5) * 50;
+            particlePositions[i+2] = (Math.random() - 0.5) * 30 - 10;
         }
 
         particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-        const particleMat = new THREE.PointsMaterial({
-            color: 0x00f0ff, size: 0.1, transparent: true, opacity: 0.6
-        });
+        const particleMat = new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.15, transparent: true, opacity: 0.5 });
         const particleSystem = new THREE.Points(particleGeo, particleMat);
         scene.add(particleSystem);
 
-        // --- 5. RENDER LOOP ---
+        // --- 6. RENDER LOOP ---
         let clock = new THREE.Clock();
 
         function animate() {
@@ -196,32 +231,49 @@
             if (isPlaying && analyser) {
                 analyser.getByteFrequencyData(dataArray);
 
+                // Isolate heavy bass for camera pumping
                 let bassSum = 0;
-                for (let i = 0; i < 6; i++) bassSum += dataArray[i];
-                bassKick = bassSum / 6 / 255;
+                for (let i = 0; i < 4; i++) bassSum += dataArray[i];
+                bassKick = bassSum / 4 / 255;
 
-                const halfCount = BARS_COUNT / 2;
-                for (let i = 0; i < halfCount; i++) {
-                    const rawVal = dataArray[i % 64]; 
-                    const height = (rawVal / 255) * 7 + 0.1;
+                for (let i = 0; i < BARS_HALF; i++) {
+                    // LOGARITHMIC MAPPING: Spreads the bass heavy across the bottom 
+                    // and smoothly transitions highs to the top, giving it a "flowing upward" effect
+                    let percent = i / BARS_HALF;
+                    let binIndex = Math.floor(Math.pow(percent, 1.8) * 80); 
+                    if(binIndex > 255) binIndex = 255;
+                    
+                    let rawVal = dataArray[binIndex];
+                    
+                    // Boost the scale of the lowest frequencies (Bottom) heavily
+                    let bassBoost = (i < 15) ? 1.5 : 1.0;
+                    
+                    // Exponential scaling (pow 1.5) makes the peaks much sharper and cleaner
+                    let height = Math.pow(rawVal / 255, 1.5) * 10 * bassBoost + 0.1;
 
-                    gsap.to(barMeshes[i].scale, { y: height, duration: 0.05 });
-                    gsap.to(barMeshes[BARS_COUNT - 1 - i].scale, { y: height, duration: 0.05 });
+                    // Apply exact same height to Right and Left for a perfect mirror
+                    gsap.to(barPairs[i].right.scale, { y: height, duration: 0.04 });
+                    gsap.to(barPairs[i].left.scale, { y: height, duration: 0.04 });
                 }
             }
 
-            camera.position.z = 18 - (bassKick * 2.5);
-            camera.position.x = Math.sin(time * 0.5) * 0.5;
-            camera.position.y = Math.cos(time * 0.3) * 0.5;
+            // Camera Beat Pump (Zoom in on heavy bass)
+            camera.position.z = 18 - (bassKick * 3);
+            
+            // Subtle camera shake locked to bass (No massive orbiting)
+            camera.position.x = (Math.random() - 0.5) * bassKick * 0.2;
+            camera.position.y = (Math.random() - 0.5) * bassKick * 0.2;
 
-            barsGroup.rotation.z = time * 0.1;
-            const groupScale = 1 + (bassKick * 0.15);
+            // Base group scale pulsing with the beat
+            const groupScale = 1 + (bassKick * 0.12);
             barsGroup.scale.set(groupScale, groupScale, groupScale);
+            // NOTE: Rotation has been entirely removed to keep the mirror locked and clean
 
+            // Particles flow upwards, accelerating on bass drops
             const positions = particleSystem.geometry.attributes.position.array;
             for (let i = 1; i < particleCount * 3; i += 3) {
-                positions[i] += 0.02 + (bassKick * 0.08);
-                if (positions[i] > 20) positions[i] = -20;
+                positions[i] += 0.03 + (bassKick * 0.1); 
+                if (positions[i] > 25) positions[i] = -25;
             }
             particleSystem.geometry.attributes.position.needsUpdate = true;
 
@@ -230,7 +282,7 @@
 
         animate();
 
-        // --- 6. CONTROLS ---
+        // --- 7. CONTROLS ---
         const playBtn = document.getElementById('playBtn');
         const audioInput = document.getElementById('audioInput');
 
@@ -241,16 +293,15 @@
             if (isPlaying) {
                 audio.pause();
                 isPlaying = false;
-                playBtn.innerText = "▶ PLAY TRACK";
+                playBtn.innerText = "▶ PLAY PREVIEW";
             } else {
                 audio.play().then(() => {
                     isPlaying = true;
                     playBtn.innerText = "⏸ PAUSE TRACK";
-                }).catch(e => console.error("Audio play error:", e));
+                });
             }
         });
 
-        // Local MP3 Loader
         audioInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -265,12 +316,6 @@
                 isPlaying = true;
                 playBtn.innerText = "⏸ PAUSE TRACK";
             });
-        });
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
 </body>
