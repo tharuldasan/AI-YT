@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA // 7CLOUDS FULL SONG & MULTI-BG LYRIC ENGINE</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@1,800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>AURA // FULL SONG LYRIC & AUDIO LINE ENGINE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,700;0,900;1,800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #05070f;
@@ -27,10 +27,9 @@
             flex-wrap: wrap;
         }
         
-        /* Control Panel */
         .panel {
             background: var(--card);
-            padding: 24px;
+            padding: 20px;
             border-radius: 14px;
             width: 100%;
             max-width: 440px;
@@ -38,139 +37,167 @@
             box-shadow: 0 12px 40px rgba(0,0,0,0.8);
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
         }
-        h1 { color: var(--primary); font-size: 20px; letter-spacing: 2px; text-transform: uppercase; }
-        .subtitle { font-size: 11px; color: #64748b; letter-spacing: 1px; margin-top: -10px; }
+        h1 { color: var(--primary); font-size: 18px; letter-spacing: 1.5px; text-transform: uppercase; }
+        .subtitle { font-size: 11px; color: #64748b; letter-spacing: 1px; margin-top: -8px; }
         
-        label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; display: block; margin-bottom: 6px; }
+        label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; display: block; margin-bottom: 4px; }
         
-        input[type="text"], input[type="file"] {
-            width: 100%; padding: 12px; background: #05070f; border: 1px solid var(--border);
-            border-radius: 8px; color: #fff; font-size: 13px;
+        input[type="text"], input[type="file"], select {
+            width: 100%; padding: 10px; background: #05070f; border: 1px solid var(--border);
+            border-radius: 8px; color: #fff; font-size: 12px;
         }
         
         .search-group { display: flex; gap: 8px; }
         
         button {
-            padding: 12px 18px; background: linear-gradient(135deg, var(--primary), #ff7b00);
+            padding: 10px 16px; background: linear-gradient(135deg, var(--primary), #ff7b00);
             color: #fff; border: none; border-radius: 8px; font-weight: 800;
             cursor: pointer; text-transform: uppercase; transition: all 0.2s ease;
-            font-size: 12px;
+            font-size: 11px;
         }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-        button:disabled { background: #334155; color: #64748b; cursor: not-allowed; transform: none; }
+        button:hover { opacity: 0.9; }
+        button:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
         
-        /* Song Selection List */
-        .results-list {
-            max-height: 140px; overflow-y: auto; background: #05070f;
-            border: 1px solid var(--border); border-radius: 8px;
-            display: flex; flex-direction: column; gap: 4px; padding: 6px;
+        .mode-selector {
+            display: flex; gap: 8px; background: #05070f; padding: 4px; border-radius: 8px; border: 1px solid var(--border);
         }
-        .track-item {
-            padding: 8px 10px; background: #0d111d; border-radius: 6px; cursor: pointer;
-            font-size: 12px; display: flex; justify-content: space-between; align-items: center;
-            border: 1px solid transparent; transition: all 0.2s;
+        .mode-btn {
+            flex: 1; background: transparent; color: #64748b; padding: 8px; border-radius: 6px; font-size: 11px; text-align: center; cursor: pointer; font-weight: 700;
         }
-        .track-item:hover, .track-item.active {
-            border-color: var(--primary); background: rgba(255, 0, 85, 0.1);
-        }
-        .track-info { display: flex; flex-direction: column; overflow: hidden; white-space: nowrap; }
-        .track-title { font-weight: 700; color: #fff; text-overflow: ellipsis; overflow: hidden; }
-        .track-artist { font-size: 10px; color: #64748b; }
+        .mode-btn.active { background: var(--primary); color: #fff; }
 
-        /* Background Selection Grid */
-        .bg-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-        }
+        .bg-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
         .bg-thumb {
-            width: 100%; aspect-ratio: 16/9; border-radius: 6px; object-fit: cover;
-            cursor: pointer; border: 2px solid transparent; transition: all 0.2s;
-            background: #05070f;
+            width: 100%; aspect-ratio: 16/9; border-radius: 4px; object-fit: cover;
+            cursor: pointer; border: 2px solid transparent; transition: all 0.2s; background: #05070f;
         }
-        .bg-thumb:hover, .bg-thumb.active {
-            border-color: var(--accent); transform: scale(1.05); box-shadow: 0 0 12px rgba(0,240,255,0.4);
-        }
+        .bg-thumb:hover, .bg-thumb.active { border-color: var(--accent); }
 
-        /* Canvas Box */
+        .player-wrapper {
+            display: flex; flex-direction: column; gap: 8px;
+        }
         .canvas-container {
             background: #000; border-radius: 14px; overflow: hidden;
             border: 2px solid var(--border);
-            width: 854px; height: 480px; /* CSS scale for 1920x1080 */
+            width: 854px; height: 480px; /* 16:9 Scale */
             box-shadow: 0 0 50px rgba(255, 0, 85, 0.15);
             position: relative;
         }
         canvas { width: 100%; height: 100%; display: block; }
-        
-        #status { font-size: 11px; color: var(--accent); text-align: center; min-height: 24px; }
-        .full-mp3-box { border-top: 1px dashed var(--border); padding-top: 10px; }
+
+        /* YouTube Style Timeline / Scrubber Line */
+        .yt-scrubber-container {
+            width: 854px; background: var(--card); padding: 12px 16px; border-radius: 10px;
+            border: 1px solid var(--border); display: flex; align-items: center; gap: 12px;
+        }
+        .time-display { font-size: 12px; font-family: monospace; color: var(--accent); min-width: 90px; }
+        input[type="range"] {
+            flex: 1; -webkit-appearance: none; appearance: none; height: 6px;
+            background: #1e293b; border-radius: 3px; outline: none; cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 14px; height: 14px;
+            border-radius: 50%; background: var(--primary); cursor: pointer; transition: transform 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.3); }
+
+        #status { font-size: 11px; color: var(--accent); text-align: center; min-height: 18px; }
     </style>
 </head>
 <body>
 
     <div class="panel">
-        <h1>⚡ AURA LYRIC ENGINE</h1>
-        <div class="subtitle">16:9 LANDSCAPE • MULTI-TRACK • MULTI-BG</div>
+        <h1>⚡ AURA ENGINE</h1>
+        <div class="subtitle">FULL SONG • LYRICS vs AUDIO LINES • YT SCRUBBER</div>
         
-        <!-- 1. Song Search -->
+        <!-- Mode Switcher -->
+        <label>Visual Mode:</label>
+        <div class="mode-selector">
+            <div class="mode-btn active" id="btnModeLyrics" onclick="setVisualMode('lyrics')">🎤 7Clouds Lyrics</div>
+            <div class="mode-btn" id="btnModeLines" onclick="setVisualMode('lines')">🎵 Audio Spectrum Lines</div>
+        </div>
+
+        <!-- Full Song Upload / API Search -->
         <div>
-            <label>1. Search Song Name / Artist:</label>
+            <label>1. Full Song MP3 File (Recommended for 100% Full Song):</label>
+            <input type="file" id="fullMp3Input" accept="audio/*">
+        </div>
+
+        <div>
+            <label>2. Search Online Lyrics / Preview Track:</label>
             <div class="search-group">
-                <input type="text" id="songQuery" placeholder="e.g. Starboy Weeknd">
+                <input type="text" id="songQuery" placeholder="e.g. Limitless Elektronomia">
                 <button onclick="searchMusic()">Search</button>
             </div>
         </div>
 
-        <!-- 2. Select Music Result -->
+        <!-- Custom BG Upload -->
         <div>
-            <label>2. Select Song Track Result:</label>
-            <div class="results-list" id="songResults">
-                <div style="font-size:11px; color:#64748b; padding:10px; text-align:center;">Search for a song to view tracks...</div>
-            </div>
+            <label>3. Upload Custom Background Image (Or Pick Below):</label>
+            <input type="file" id="customBgInput" accept="image/*">
         </div>
 
-        <!-- 3. Select Background -->
+        <!-- Background Options -->
         <div>
-            <label>3. Select Preferred AI Background:</label>
+            <label>AI Generated Backgrounds:</label>
             <div class="bg-grid" id="bgGrid">
-                <div style="grid-column: span 4; font-size:11px; color:#64748b; text-align:center; padding:10px; background:#05070f; border-radius:6px;">Backgrounds load after searching...</div>
+                <div style="grid-column: span 4; font-size:10px; color:#64748b; text-align:center; padding:6px;">Search song to load AI backgrounds...</div>
             </div>
-        </div>
-
-        <!-- 4. Optional Full MP3 Override -->
-        <div class="full-mp3-box">
-            <label>Optional: Upload Full Song MP3 (Syncs with Lyrics):</label>
-            <input type="file" id="fullMp3Input" accept="audio/*">
         </div>
 
         <div id="status">Ready</div>
 
-        <button id="playBtn" disabled>▶️ PLAY 16:9 LYRIC VIDEO</button>
+        <button id="playBtn" disabled>▶️ PLAY VIDEO</button>
     </div>
 
-    <!-- Canvas Preview (1920x1080 Native) -->
-    <div class="canvas-container">
-        <canvas id="visualizer" width="1920" height="1080"></canvas>
+    <!-- Video Canvas + YT Timeline Player -->
+    <div class="player-wrapper">
+        <div class="canvas-container">
+            <canvas id="visualizer" width="1920" height="1080"></canvas>
+        </div>
+
+        <!-- YouTube Style Progress Scrubber Line -->
+        <div class="yt-scrubber-container">
+            <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+            <input type="range" id="seekBar" value="0" min="0" max="100" step="0.1">
+        </div>
     </div>
+
+    <!-- Hidden HTML5 Audio Element for Smooth Native Seeking -->
+    <audio id="audioElement" crossorigin="anonymous"></audio>
 
     <script>
         const canvas = document.getElementById('visualizer');
         const ctx = canvas.getContext('2d');
         const statusTxt = document.getElementById('status');
         const playBtn = document.getElementById('playBtn');
-        const songResultsContainer = document.getElementById('songResults');
+        const audioElem = document.getElementById('audioElement');
+        const seekBar = document.getElementById('seekBar');
+        const timeDisplay = document.getElementById('timeDisplay');
         const bgGridContainer = document.getElementById('bgGrid');
 
-        let bgImg = new Image();
         let audioCtx, source, analyser;
-        let audioBuffer = null;
         let isPlaying = false;
-        let startTime = 0;
+        let visualMode = 'lyrics'; // 'lyrics' or 'lines'
         
+        let bgImg = new Image();
         let syncedLyrics = [];
-        let selectedTrack = null;
+        let songTitle = "Limitless";
+        let artistName = "Elektronomia";
 
-        // Ensure font is pre-loaded for canvas rendering
+        // Particle System for Audio Lines Mode
+        let particles = [];
+        for(let i = 0; i < 60; i++) {
+            particles.push({
+                angle: (Math.PI * 2 / 60) * i,
+                radius: 220 + Math.random() * 40,
+                size: Math.random() * 6 + 2,
+                speed: 0.005 + Math.random() * 0.01
+            });
+        }
+
         document.fonts.load("italic 800 85px 'Montserrat'").then(() => drawIdleState());
 
         function drawIdleState() {
@@ -179,78 +206,96 @@
             ctx.fillStyle = '#1e293b';
             ctx.font = "italic 800 50px 'Montserrat'";
             ctx.textAlign = 'center';
-            ctx.fillText("7CLOUDS LYRIC ENGINE READY", canvas.width/2, canvas.height/2);
+            ctx.fillText("READY TO PLAY", canvas.width/2, canvas.height/2);
         }
 
-        // --- 1. SEARCH SEVERAL SONGS ---
+        function setVisualMode(mode) {
+            visualMode = mode;
+            document.getElementById('btnModeLyrics').classList.toggle('active', mode === 'lyrics');
+            document.getElementById('btnModeLines').classList.toggle('active', mode === 'lines');
+        }
+
+        // --- 1. FULL MP3 FILE UPLOAD ---
+        document.getElementById('fullMp3Input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            const url = URL.createObjectURL(file);
+            audioElem.src = url;
+            songTitle = file.name.replace(/\.[^/.]+$/, "");
+            artistName = "Local Audio File";
+            
+            initAudioContext();
+            playBtn.disabled = false;
+            statusTxt.innerText = "Full MP3 Loaded! Ready to Play.";
+        });
+
+        // --- 2. CUSTOM BACKGROUND IMAGE UPLOAD ---
+        document.getElementById('customBgInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                bgImg.src = evt.target.result;
+                document.querySelectorAll('.bg-thumb').forEach(el => el.classList.remove('active'));
+                statusTxt.innerText = "Custom Background Loaded!";
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // --- 3. ONLINE SEARCH (Lyrics + iTunes Preview) ---
         async function searchMusic() {
             const query = document.getElementById('songQuery').value;
             if(!query) return;
-            
-            statusTxt.innerText = "Searching songs and lyrics...";
-            songResultsContainer.innerHTML = `<div style="font-size:11px; color:#00f0ff; padding:10px; text-align:center;">Searching...</div>`;
-            
+
+            statusTxt.innerText = "Searching songs and synced lyrics...";
             try {
-                // Fetch multiple tracks from LRCLIB for synced lyrics + iTunes for audio stream
                 const [lrcRes, itunesRes] = await Promise.all([
                     fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`),
-                    fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=5`)
+                    fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=1`)
                 ]);
 
                 const lrcData = await lrcRes.json();
                 const itunesData = await itunesRes.json();
 
-                if(!itunesData.results || itunesData.results.length === 0) {
-                    songResultsContainer.innerHTML = `<div style="font-size:11px; color:#ff0055; padding:10px; text-align:center;">No results found.</div>`;
-                    return;
+                if(itunesData.results.length > 0) {
+                    const track = itunesData.results[0];
+                    songTitle = track.trackName;
+                    artistName = track.artistName;
+
+                    // If no full MP3 is uploaded, use online preview URL
+                    if(!document.getElementById('fullMp3Input').files.length) {
+                        audioElem.src = track.previewUrl;
+                        initAudioContext();
+                        playBtn.disabled = false;
+                    }
                 }
 
-                songResultsContainer.innerHTML = '';
+                if(lrcData.length > 0 && lrcData[0].syncedLyrics) {
+                    parseLRC(lrcData[0].syncedLyrics);
+                    statusTxt.innerText = "Lyrics synced successfully!";
+                } else {
+                    statusTxt.innerText = "Track loaded (No synced lyrics found).";
+                }
 
-                // Render list of several tracks
-                itunesData.results.forEach((track, index) => {
-                    const item = document.createElement('div');
-                    item.className = `track-item ${index === 0 ? 'active' : ''}`;
-                    item.innerHTML = `
-                        <div class="track-info">
-                            <span class="track-title">${track.trackName}</span>
-                            <span class="track-artist">${track.artistName} • ${track.collectionName || 'Single'}</span>
-                        </div>
-                        <span style="font-size:10px; color:#00f0ff;">SELECT</span>
-                    `;
-                    item.onclick = () => {
-                        document.querySelectorAll('.track-item').forEach(el => el.classList.remove('active'));
-                        item.classList.add('active');
-                        loadSelectedTrack(track, lrcData);
-                    };
-                    songResultsContainer.appendChild(item);
-                });
-
-                // Auto-load first track result & generate background choices
                 generateBackgrounds(query);
-                loadSelectedTrack(itunesData.results[0], lrcData);
 
             } catch(err) {
                 statusTxt.innerText = "Search Error: " + err.message;
             }
         }
 
-        // --- 2. GENERATE SEVERAL BACKGROUND OPTIONS ---
         function generateBackgrounds(query) {
             bgGridContainer.innerHTML = '';
-            statusTxt.innerText = "Generating 4 AI background options...";
-
-            // 4 distinct artistic aesthetic styles
             const styles = [
-                `cinematic atmospheric landscape artwork for ${query} dynamic lighting wallpaper`,
-                `neon cyberpunk futuristic dark aesthetic wallpaper for ${query}`,
-                `fantasy mystical dramatic clouds surreal art for ${query}`,
-                `lofi dark anime aesthetic scenic background for ${query}`
+                `cinematic landscape background for ${query} wallpaper`,
+                `neon cyberpunk aesthetic wallpaper for ${query}`,
+                `surreal fantasy dark background for ${query}`,
+                `minimalist abstract dark wallpaper for ${query}`
             ];
 
             styles.forEach((promptText, index) => {
-                const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=1920&height=1080&nologo=true&seed=${(index+1)*123}`;
-                
+                const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=1920&height=1080&nologo=true&seed=${(index+1)*88}`;
                 const imgThumb = document.createElement('img');
                 imgThumb.className = `bg-thumb ${index === 0 ? 'active' : ''}`;
                 imgThumb.src = imgUrl;
@@ -260,61 +305,16 @@
                     imgThumb.classList.add('active');
                     bgImg.crossOrigin = "anonymous";
                     bgImg.src = imgUrl;
-                    statusTxt.innerText = "Background updated!";
                 };
 
                 bgGridContainer.appendChild(imgThumb);
-
-                if (index === 0) {
+                if(index === 0) {
                     bgImg.crossOrigin = "anonymous";
                     bgImg.src = imgUrl;
                 }
             });
         }
 
-        // --- 3. LOAD SELECTED TRACK & SYNCHRONIZED LYRICS ---
-        async function loadSelectedTrack(track, lrcData) {
-            selectedTrack = track;
-            playBtn.disabled = true;
-            statusTxt.innerText = `Loading track: ${track.trackName}...`;
-
-            // Find matching lyrics from LRCLIB search
-            const lyricMatch = lrcData.find(l => l.syncedLyrics && l.trackName.toLowerCase().includes(track.trackName.toLowerCase())) || lrcData.find(l => l.syncedLyrics);
-
-            if (lyricMatch && lyricMatch.syncedLyrics) {
-                parseLRC(lyricMatch.syncedLyrics);
-            } else {
-                syncedLyrics = [];
-                statusTxt.innerText = "No synced lyrics available for this track.";
-            }
-
-            // Fetch and Decode Audio preview or local MP3
-            if (!document.getElementById('fullMp3Input').files.length) {
-                const audioRes = await fetch(track.previewUrl);
-                const arrayBuffer = await audioRes.arrayBuffer();
-                if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-            }
-
-            playBtn.disabled = false;
-            statusTxt.innerText = `Ready: ${track.trackName} - ${track.artistName}`;
-        }
-
-        // --- 4. OPTIONAL FULL MP3 OVERRIDE ---
-        document.getElementById('fullMp3Input').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            statusTxt.innerText = "Decoding full local MP3 file...";
-            
-            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const arrayBuffer = await file.arrayBuffer();
-            audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-            
-            playBtn.disabled = false;
-            statusTxt.innerText = "Full MP3 Loaded and Synced!";
-        });
-
-        // Parse .lrc synced lyrics
         function parseLRC(lrcString) {
             syncedLyrics = [];
             const lines = lrcString.split('\n');
@@ -323,44 +323,205 @@
             for (let line of lines) {
                 const match = line.match(regex);
                 if (match) {
-                    const minutes = parseInt(match[1]);
-                    const seconds = parseInt(match[2]);
+                    const mins = parseInt(match[1]);
+                    const secs = parseInt(match[2]);
                     const ms = parseInt(match[3].padEnd(3, '0'));
-                    const timeInSeconds = (minutes * 60) + seconds + (ms / 1000);
+                    const time = (mins * 60) + secs + (ms / 1000);
                     const text = match[4].trim();
-                    if (text) syncedLyrics.push({ time: timeInSeconds, text: text });
+                    if (text) syncedLyrics.push({ time, text });
                 }
             }
         }
 
-        function setupAudio() {
-            source = audioCtx.createBufferSource();
-            source.buffer = audioBuffer;
-            analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 256;
-            analyser.smoothingTimeConstant = 0.8;
-            source.connect(analyser);
-            analyser.connect(audioCtx.destination);
+        // --- 4. WEB AUDIO API & SCRUBBER CONTROL ---
+        function initAudioContext() {
+            if(!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                source = audioCtx.createMediaElementSource(audioElem);
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+                analyser.connect(audioCtx.destination);
+            }
         }
 
         playBtn.addEventListener('click', () => {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
 
             if (isPlaying) {
-                source.stop();
+                audioElem.pause();
                 isPlaying = false;
-                playBtn.innerText = "▶️ PLAY 16:9 LYRIC VIDEO";
+                playBtn.innerText = "▶️ PLAY VIDEO";
             } else {
-                setupAudio();
-                source.start(0);
-                startTime = audioCtx.currentTime;
+                audioElem.play();
                 isPlaying = true;
-                playBtn.innerText = "⏸️ STOP VIDEO";
+                playBtn.innerText = "⏸️ PAUSE VIDEO";
                 renderFrame();
             }
         });
 
-        // Smart text wrapping for 7clouds dynamic placement
+        // YouTube Scrubber Bar Events
+        audioElem.addEventListener('timeupdate', () => {
+            if(!audioElem.duration) return;
+            const progress = (audioElem.currentTime / audioElem.duration) * 100;
+            seekBar.value = progress;
+            timeDisplay.innerText = `${formatTime(audioElem.currentTime)} / ${formatTime(audioElem.duration)}`;
+        });
+
+        seekBar.addEventListener('input', () => {
+            if(!audioElem.duration) return;
+            audioElem.currentTime = (seekBar.value / 100) * audioElem.duration;
+        });
+
+        function formatTime(secs) {
+            const m = Math.floor(secs / 60);
+            const s = Math.floor(secs % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        // --- 5. RENDER ENGINE (1920x1080 LANDSCAPE) ---
+        function renderFrame() {
+            if (!isPlaying) return;
+            requestAnimationFrame(renderFrame);
+
+            const currentTime = audioElem.currentTime;
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+
+            // Frequency Data
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(dataArray);
+            let bass = (dataArray[0] + dataArray[1] + dataArray[2] + dataArray[3]) / 4;
+            let kick = bass > 180 ? (bass - 180) / 75 : 0;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Background (If available)
+            if (bgImg.complete && bgImg.naturalWidth !== 0) {
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.scale(1 + (kick * 0.03), 1 + (kick * 0.03));
+                ctx.drawImage(bgImg, -canvas.width/2, -canvas.height/2, canvas.width, canvas.height);
+                ctx.restore();
+            } else {
+                ctx.fillStyle = '#05070f';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // Dark Vignette Overlay
+            let grad = ctx.createRadialGradient(cx, cy, 300, cx, cy, 1100);
+            grad.addColorStop(0, "rgba(0,0,0,0.4)");
+            grad.addColorStop(1, "rgba(0,0,0,0.88)");
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // MODE 1: 7CLOUDS LYRICS
+            if (visualMode === 'lyrics') {
+                let activeLyric = "";
+                let nextLyric = "";
+                
+                for (let i = 0; i < syncedLyrics.length; i++) {
+                    if (currentTime >= syncedLyrics[i].time) {
+                        activeLyric = syncedLyrics[i].text;
+                        if (i + 1 < syncedLyrics.length) nextLyric = syncedLyrics[i+1].text;
+                    } else break;
+                }
+
+                if (nextLyric) {
+                    ctx.font = "800 36px 'Montserrat'";
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+                    ctx.textAlign = "center";
+                    ctx.fillText(nextLyric, cx, cy + 180);
+                }
+
+                if (activeLyric) {
+                    ctx.font = "italic 800 85px 'Montserrat'";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+                    ctx.shadowBlur = 30;
+                    ctx.shadowOffsetX = 6;
+                    ctx.shadowOffsetY = 6;
+                    ctx.fillStyle = "#ffffff";
+                    ctx.lineWidth = 4;
+                    ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
+
+                    wrapText(ctx, activeLyric.toUpperCase(), cx, cy, canvas.width * 0.82, 105);
+                    ctx.shadowBlur = 0;
+                }
+            } 
+            // MODE 2: AUDIO SPECTRUM LINES (Matching your screenshots)
+            else if (visualMode === 'lines') {
+                
+                // 1. Central Glowing Orb
+                ctx.save();
+                ctx.beginPath();
+                let orbRadius = 100 + (kick * 60);
+                let orbGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, orbRadius);
+                orbGrad.addColorStop(0, "rgba(255, 255, 200, 0.9)");
+                orbGrad.addColorStop(0.4, "rgba(255, 200, 0, 0.5)");
+                orbGrad.addColorStop(1, "rgba(255, 0, 85, 0)");
+                ctx.fillStyle = orbGrad;
+                ctx.arc(cx, cy, orbRadius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
+                // 2. Rainbow Arc Particles
+                particles.forEach((p, idx) => {
+                    p.angle += p.speed;
+                    let pX = cx + Math.cos(p.angle) * (p.radius + (kick * 30));
+                    let pY = cy + Math.sin(p.angle) * (p.radius * 0.5 + (kick * 15));
+                    
+                    ctx.beginPath();
+                    ctx.fillStyle = `hsl(${(idx * 6 + currentTime * 50) % 360}, 100%, 65%)`;
+                    ctx.arc(pX, pY, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // 3. Central Horizontal Audio Waveform Spectrum Lines
+                const numBars = 64;
+                const barWidth = 10;
+                const spacing = 8;
+                const totalWidth = (numBars * (barWidth + spacing));
+                const startX = cx - (totalWidth / 2);
+                const axisY = cy;
+
+                // Center Axis Line
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(startX - 40, axisY);
+                ctx.lineTo(startX + totalWidth + 40, axisY);
+                ctx.stroke();
+
+                for (let i = 0; i < numBars; i++) {
+                    let index = Math.floor(i * (dataArray.length / numBars));
+                    let value = dataArray[index] || 0;
+                    let barHeight = (value / 255) * 180;
+
+                    let x = startX + i * (barWidth + spacing);
+
+                    ctx.fillStyle = "#ffffff";
+                    ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
+                    ctx.shadowBlur = 10;
+
+                    // Dual direction vertical bars radiating from center horizontal axis
+                    ctx.fillRect(x, axisY - (barHeight / 2), barWidth, barHeight);
+                }
+                ctx.shadowBlur = 0;
+
+                // 4. Track Metadata Below Line (NCS Style)
+                ctx.font = "700 48px 'Montserrat'";
+                ctx.fillStyle = "#ffffff";
+                ctx.textAlign = "center";
+                ctx.fillText(songTitle, cx, axisY + 140);
+
+                ctx.font = "600 28px 'Montserrat'";
+                ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+                ctx.fillText(artistName, cx, axisY + 190);
+            }
+        }
+
         function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
             let words = text.split(' ');
             let line = '';
@@ -368,8 +529,7 @@
 
             for(let n = 0; n < words.length; n++) {
                 let testLine = line + words[n] + ' ';
-                let testWidth = ctx.measureText(testLine).width;
-                if (testWidth > maxWidth && n > 0) {
+                if (ctx.measureText(testLine).width > maxWidth && n > 0) {
                     linesArray.push(line);
                     line = words[n] + ' ';
                 } else {
@@ -379,95 +539,9 @@
             linesArray.push(line);
 
             let startY = y - ((linesArray.length - 1) * lineHeight) / 2;
-
             for(let k = 0; k < linesArray.length; k++) {
                 ctx.fillText(linesArray[k], x, startY + (k * lineHeight));
                 ctx.strokeText(linesArray[k], x, startY + (k * lineHeight));
-            }
-        }
-
-        // --- 5. CANVAS RENDER LOOP (1920x1080 LANDSCAPE) ---
-        function renderFrame() {
-            if (!isPlaying) return;
-            requestAnimationFrame(renderFrame);
-
-            const currentTime = audioCtx.currentTime - startTime;
-            
-            if (currentTime >= audioBuffer.duration) {
-                isPlaying = false;
-                playBtn.innerText = "▶️ PLAY 16:9 LYRIC VIDEO";
-                return;
-            }
-
-            // Audio pulse
-            const dataArray = new Uint8Array(analyser.frequencyBinCount);
-            analyser.getByteFrequencyData(dataArray);
-            let bass = (dataArray[0] + dataArray[1] + dataArray[2]) / 3;
-            let kickPump = bass > 200 ? (bass - 200) / 120 : 0;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const cx = canvas.width / 2;
-            const cy = canvas.height / 2;
-            const scale = 1 + (kickPump * 0.04);
-
-            // Draw Selected Background
-            if (bgImg.complete && bgImg.naturalWidth !== 0) {
-                ctx.save();
-                ctx.translate(cx, cy);
-                ctx.scale(scale, scale);
-                ctx.drawImage(bgImg, -canvas.width/2, -canvas.height/2, canvas.width, canvas.height);
-                ctx.restore();
-            }
-
-            // Cinematic Dark Vignette for ultimate text readability
-            let grad = ctx.createRadialGradient(cx, cy, 300, cx, cy, 1100);
-            grad.addColorStop(0, "rgba(0,0,0,0.35)");
-            grad.addColorStop(1, "rgba(0,0,0,0.88)");
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Active & Next Lyric Lookup
-            let activeLyric = "";
-            let nextLyric = "";
-            
-            for (let i = 0; i < syncedLyrics.length; i++) {
-                if (currentTime >= syncedLyrics[i].time) {
-                    activeLyric = syncedLyrics[i].text;
-                    if (i + 1 < syncedLyrics.length) nextLyric = syncedLyrics[i+1].text;
-                } else {
-                    break;
-                }
-            }
-
-            // Draw Upcoming Line (Preview)
-            if (nextLyric) {
-                ctx.font = "800 36px 'Montserrat'";
-                ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
-                ctx.textAlign = "center";
-                ctx.fillText(nextLyric, cx, cy + 180);
-            }
-
-            // Draw Active Lyric (7clouds Typography)
-            if (activeLyric) {
-                ctx.font = "italic 800 85px 'Montserrat'";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                
-                // Heavy multi-layer shadows for crisp visibility on any background
-                ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
-                ctx.shadowBlur = 30;
-                ctx.shadowOffsetX = 6;
-                ctx.shadowOffsetY = 6;
-
-                ctx.fillStyle = "#ffffff";
-                ctx.lineWidth = 4;
-                ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
-
-                const maxTextWidth = canvas.width * 0.82;
-                wrapText(ctx, activeLyric.toUpperCase(), cx, cy, maxTextWidth, 105);
-                
-                ctx.shadowBlur = 0;
             }
         }
     </script>
