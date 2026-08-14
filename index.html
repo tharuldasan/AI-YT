@@ -1,529 +1,409 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Advanced Audio Visualizer & Player</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA // STUDIO ENGINE V3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,700;0,900;1,800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #05070f;
+            --card: #0d111d;
+            --primary: #ff0055;
+            --accent: #00f0ff;
+            --text: #f8fafc;
+            --border: #1e293b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+        
+        /* Control Panel */
+        .panel {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 440px;
+            border: 1px solid var(--border);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        h1 { color: var(--primary); font-size: 18px; letter-spacing: 1.5px; text-transform: uppercase; }
+        .subtitle { font-size: 11px; color: #64748b; letter-spacing: 1px; margin-top: -8px; }
+        
+        label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; display: block; margin-bottom: 4px; }
+        
+        input[type="text"], input[type="file"], input[type="range"], select {
+            width: 100%; padding: 10px; background: #05070f; border: 1px solid var(--border);
+            border-radius: 8px; color: #fff; font-size: 12px; outline: none;
+        }
+        
+        .search-group { display: flex; gap: 8px; }
+        
+        button {
+            padding: 10px 16px; background: linear-gradient(135deg, var(--primary), #ff7b00);
+            color: #fff; border: none; border-radius: 8px; font-weight: 800;
+            cursor: pointer; text-transform: uppercase; transition: all 0.2s ease; font-size: 11px;
+        }
+        button:hover { opacity: 0.9; }
+        
+        /* Mode Selector */
+        .mode-selector {
+            display: flex; gap: 8px; background: #05070f; padding: 4px; border-radius: 8px; border: 1px solid var(--border);
+        }
+        .mode-btn {
+            flex: 1; background: transparent; color: #64748b; padding: 8px; border-radius: 6px; font-size: 11px; text-align: center; cursor: pointer; font-weight: 700;
+        }
+        .mode-btn.active { background: var(--primary); color: #fff; }
 
-    body {
-      background-color: #0b0c10;
-      color: #fff;
-      overflow: hidden;
-      height: 100vh;
-      display: flex;
-    }
+        /* Video Canvas Player */
+        .player-wrapper { display: flex; flex-direction: column; gap: 8px; }
+        .canvas-container {
+            background: #000; border-radius: 14px; overflow: hidden;
+            border: 2px solid var(--border);
+            width: 854px; height: 480px; /* Scaled 16:9 view */
+            box-shadow: 0 0 50px rgba(0, 240, 255, 0.1);
+            position: relative;
+        }
+        canvas { width: 100%; height: 100%; display: block; }
 
-    /* Background Display (No stretch, clean fit) */
-    #bg-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-      overflow: hidden;
-      background: #000;
-    }
+        /* YouTube Scrubber Line */
+        .yt-scrubber-container {
+            width: 854px; background: var(--card); padding: 12px 16px; border-radius: 10px;
+            border: 1px solid var(--border); display: flex; align-items: center; gap: 12px;
+        }
+        .time-display { font-size: 12px; font-family: monospace; color: var(--accent); min-width: 90px; }
+        input[type="range"].scrubber {
+            flex: 1; -webkit-appearance: none; appearance: none; height: 6px; padding: 0;
+            background: #1e293b; border-radius: 3px; cursor: pointer;
+        }
+        input[type="range"].scrubber::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 14px; height: 14px;
+            border-radius: 50%; background: var(--primary); cursor: pointer; transition: transform 0.1s;
+        }
+        input[type="range"].scrubber::-webkit-slider-thumb:hover { transform: scale(1.3); }
 
-    .bg-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover; /* Maintains aspect ratio without distorting */
-      position: absolute;
-      opacity: 0;
-      transition: opacity 1s ease-in-out, transform 0.3s ease;
-      filter: brightness(0.6) contrast(1.1);
-    }
-
-    .bg-image.active {
-      opacity: 1;
-    }
-
-    /* Audio Canvas Overlay */
-    #visualizer-canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 2;
-      pointer-events: none;
-    }
-
-    /* Control Panel UI */
-    #ui-container {
-      position: relative;
-      z-index: 3;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 20px;
-      background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.85) 100%);
-    }
-
-    header {
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-      align-items: center;
-      background: rgba(20, 20, 20, 0.7);
-      padding: 12px 20px;
-      border-radius: 12px;
-      backdrop-filter: blur(10px);
-    }
-
-    .control-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    label {
-      font-size: 0.85rem;
-      color: #45f3ff;
-      font-weight: 600;
-    }
-
-    input, select, button {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #fff;
-      padding: 6px 12px;
-      border-radius: 6px;
-      outline: none;
-      font-size: 0.85rem;
-    }
-
-    select option {
-      background: #111;
-      color: #fff;
-    }
-
-    button {
-      cursor: pointer;
-      background: #45f3ff;
-      color: #000;
-      font-weight: bold;
-      border: none;
-      transition: background 0.2s;
-    }
-
-    button:hover {
-      background: #00c8d6;
-    }
-
-    /* Lyrics Display */
-    #lyrics-container {
-      text-align: center;
-      margin: auto 0;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
-    }
-
-    #lyrics-text {
-      font-size: 1.8rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-      color: #ffffff;
-      transition: all 0.3s ease;
-    }
-
-    #detected-lang-badge {
-      font-size: 0.75rem;
-      background: rgba(69, 243, 255, 0.2);
-      color: #45f3ff;
-      padding: 2px 8px;
-      border-radius: 10px;
-      display: inline-block;
-      margin-bottom: 8px;
-    }
-
-    /* Footer Player Controls */
-    footer {
-      background: rgba(20, 20, 20, 0.8);
-      padding: 15px 25px;
-      border-radius: 16px;
-      backdrop-filter: blur(12px);
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .timeline-container {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .timeline-container span {
-      font-size: 0.8rem;
-      font-weight: bold;
-      min-width: 45px;
-    }
-
-    #progress-bar {
-      flex: 1;
-      accent-color: #45f3ff;
-      cursor: pointer;
-    }
-
-    .picture-gallery-preview {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-    }
-
-    .thumb {
-      width: 40px;
-      height: 40px;
-      border-radius: 6px;
-      object-fit: cover;
-      cursor: pointer;
-      opacity: 0.5;
-      border: 2px solid transparent;
-      transition: all 0.2s;
-    }
-
-    .thumb.active {
-      opacity: 1;
-      border-color: #45f3ff;
-    }
-  </style>
+        #status { font-size: 11px; color: var(--accent); text-align: center; min-height: 18px; }
+    </style>
 </head>
 <body>
 
-  <!-- Background Image Carousel -->
-  <div id="bg-container">
-    <img id="bg1" class="bg-image active" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200" alt="Music 1" />
-    <img id="bg2" class="bg-image" src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1200" alt="Music 2" />
-    <img id="bg3" class="bg-image" src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200" alt="Music 3" />
-    <img id="bg4" class="bg-image" src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1200" alt="Music 4" />
-  </div>
+    <!-- CONTROL PANEL -->
+    <div class="panel">
+        <h1>⚡ AURA STUDIO</h1>
+        <div class="subtitle">DUAL MODE • ALBUM ART SYNC • AUDIO MIRROR</div>
+        
+        <label>1. Visual Mode:</label>
+        <div class="mode-selector">
+            <div class="mode-btn active" id="btnModeLyrics" onclick="setVisualMode('lyrics')">🎤 Lyrics Mode</div>
+            <div class="mode-btn" id="btnModeLines" onclick="setVisualMode('lines')">🎵 Audio Lines Mode</div>
+        </div>
 
-  <!-- Audio Visualizer Canvas -->
-  <canvas id="visualizer-canvas"></canvas>
+        <label>2. Search Song (Auto-fetches Audio & Album Art):</label>
+        <div class="search-group">
+            <input type="text" id="songQuery" placeholder="e.g. Limitless Elektronomia">
+            <button onclick="searchMusic()">Search</button>
+        </div>
 
-  <!-- Controls & UI Overlay -->
-  <div id="ui-container">
-    <header>
-      <!-- Audio Input / Search -->
-      <div class="control-group">
-        <label for="audio-source-input">Audio URL / Search:</label>
-        <input type="text" id="audio-source-input" placeholder="Paste Audio URL..." value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
-        <button id="btn-load-url">Load</button>
-      </div>
+        <label>3. Local Audio File (For Full Length):</label>
+        <input type="file" id="fullMp3Input" accept="audio/*">
 
-      <div class="control-group">
-        <label for="audio-file">Upload File:</label>
-        <input type="file" id="audio-file" accept="audio/*">
-      </div>
+        <label>4. Line Frequency (Density):</label>
+        <input type="range" id="freqSlider" min="32" max="256" step="32" value="128">
 
-      <!-- Frequency Range Slider -->
-      <div class="control-group">
-        <label for="freq-slider">Frequency Scale:</label>
-        <input type="range" id="freq-slider" min="64" max="512" step="64" value="128">
-      </div>
+        <label>5. Line Height (Amplitude):</label>
+        <input type="range" id="ampSlider" min="0.5" max="3" step="0.1" value="1.5">
 
-      <!-- Lyrics Language Selector -->
-      <div class="control-group">
-        <label for="lang-select">Lyrics Language:</label>
-        <select id="lang-select">
-          <option value="auto">Auto Detect (Multi-Lang)</option>
-          <option value="en">English</option>
-          <option value="es">Spanish</option>
-          <option value="hi">Hindi</option>
-          <option value="ja">Japanese</option>
+        <label>6. Color Genre:</label>
+        <select id="genreSelect">
+            <option value="edm">EDM (Pink/Cyan)</option>
+            <option value="phonk">Phonk (Red/Purple)</option>
+            <option value="funk">Funk (Gold/Teal)</option>
+            <option value="ncs" selected>NCS (Cyan Wave)</option>
         </select>
-      </div>
 
-      <!-- Genre Effects Theme -->
-      <div class="control-group">
-        <label for="genre-select">Genre Effect:</label>
-        <select id="genre-select">
-          <option value="edm">EDM (Neon Pulsing)</option>
-          <option value="phonk">Phonk (Dark Bass Distortion)</option>
-          <option value="funk">Funk (Teal & Gold Pulse)</option>
-          <option value="ncs">NCS (Cyan Bright Wave)</option>
-          <option value="charm" selected>Charm / Chill (Soft Pastels)</option>
-        </select>
-      </div>
-    </header>
-
-    <!-- Lyrics Display Center -->
-    <div id="lyrics-container">
-      <div id="detected-lang-badge">Detected: English</div>
-      <div id="lyrics-text">🎵 Play audio to start synchronized visualizer...</div>
+        <div id="status">Awaiting Input...</div>
+        <button id="playBtn">▶️ PLAY VIDEO</button>
     </div>
 
-    <!-- Bottom Audio Controls & Gallery Selection -->
-    <footer>
-      <div class="timeline-container">
-        <button id="btn-play">Play</button>
-        <span id="current-time">0:00</span>
-        <input type="range" id="progress-bar" value="0" min="0" max="100">
-        <span id="total-duration">0:00</span>
-      </div>
+    <!-- PLAYER CANVAS -->
+    <div class="player-wrapper">
+        <div class="canvas-container">
+            <canvas id="visualizer" width="1920" height="1080"></canvas>
+        </div>
 
-      <div class="picture-gallery-preview">
-        <img class="thumb active" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200" onclick="switchBg(0)">
-        <img class="thumb" src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200" onclick="switchBg(1)">
-        <img class="thumb" src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200" onclick="switchBg(2)">
-        <img class="thumb" src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200" onclick="switchBg(3)">
-      </div>
-    </footer>
-  </div>
+        <div class="yt-scrubber-container">
+            <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+            <input type="range" class="scrubber" id="seekBar" value="0" min="0" max="100" step="0.1">
+        </div>
+    </div>
 
-  <audio id="audio-element" crossOrigin="anonymous"></audio>
+    <audio id="audioElement" crossorigin="anonymous"></audio>
 
-  <script>
-    // --- Elements & Setup ---
-    const audio = document.getElementById('audio-element');
-    const playBtn = document.getElementById('btn-play');
-    const progressBar = document.getElementById('progress-bar');
-    const currentTimeEl = document.getElementById('current-time');
-    const totalDurationEl = document.getElementById('total-duration');
-    const canvas = document.getElementById('visualizer-canvas');
-    const ctx = canvas.getContext('2d');
-    const freqSlider = document.getElementById('freq-slider');
-    const genreSelect = document.getElementById('genre-select');
-    const langSelect = document.getElementById('lang-select');
-    const detectedLangBadge = document.getElementById('detected-lang-badge');
-    const lyricsText = document.getElementById('lyrics-text');
-
-    let audioCtx, analyser, source;
-    let currentBgIndex = 0;
-    const bgImages = document.querySelectorAll('.bg-image');
-    const thumbs = document.querySelectorAll('.thumb');
-
-    // Fallback Image URLs in case external assets fail to load
-    const fallbackImages = [
-      'https://picsum.photos/id/1025/1200/800',
-      'https://picsum.photos/id/1082/1200/800',
-      'https://picsum.photos/id/1043/1200/800',
-      'https://picsum.photos/id/1074/1200/800'
-    ];
-
-    // Guarantee Image Loading Success
-    bgImages.forEach((img, idx) => {
-      img.onerror = () => { img.src = fallbackImages[idx]; };
-    });
-    thumbs.forEach((img, idx) => {
-      img.onerror = () => { img.src = fallbackImages[idx]; };
-    });
-
-    // Resize Canvas dynamically
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    // --- Audio Context Initialization ---
-    function initAudio() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioCtx.createAnalyser();
-        analyser.fftSize = parseInt(freqSlider.value) * 2;
-        source = audioCtx.createMediaElementSource(audio);
-        source.connect(analyser);
-        analyser.connect(audioCtx.destination);
-      }
-    }
-
-    // --- Audio Control & Time Handlers ---
-    playBtn.addEventListener('click', () => {
-      initAudio();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      
-      if (audio.paused) {
-        audio.play();
-        playBtn.textContent = 'Pause';
-      } else {
-        audio.pause();
-        playBtn.textContent = 'Play';
-      }
-    });
-
-    // Handle full song duration dynamically (3 min, 10 min, or short files)
-    audio.addEventListener('loadedmetadata', () => {
-      progressBar.max = Math.floor(audio.duration);
-      totalDurationEl.textContent = formatTime(audio.duration);
-    });
-
-    audio.addEventListener('timeupdate', () => {
-      if (!isNaN(audio.duration)) {
-        progressBar.value = Math.floor(audio.currentTime);
-        currentTimeEl.textContent = formatTime(audio.currentTime);
-        updateLyrics(audio.currentTime);
-      }
-    });
-
-    progressBar.addEventListener('input', () => {
-      audio.currentTime = progressBar.value;
-    });
-
-    function formatTime(seconds) {
-      const mins = Math.floor(seconds / 60);
-      const secs = Math.floor(seconds % 60);
-      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-    }
-
-    // --- Load Audio Sources ---
-    document.getElementById('btn-load-url').addEventListener('click', () => {
-      const url = document.getElementById('audio-source-input').value;
-      if (url) {
-        audio.src = url;
-        audio.load();
-        if (audioCtx) audio.play();
-        playBtn.textContent = 'Pause';
-      }
-    });
-
-    document.getElementById('audio-file').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        audio.src = URL.createObjectURL(file);
-        audio.load();
-        initAudio();
-        audio.play();
-        playBtn.textContent = 'Pause';
-      }
-    });
-
-    // Slider Adjusts Audio Frequency Resolution
-    freqSlider.addEventListener('input', () => {
-      if (analyser) {
-        analyser.fftSize = parseInt(freqSlider.value) * 2;
-      }
-    });
-
-    // --- Background Switcher ---
-    function switchBg(index) {
-      bgImages[currentBgIndex].classList.remove('active');
-      thumbs[currentBgIndex].classList.remove('active');
-      currentBgIndex = index;
-      bgImages[currentBgIndex].classList.add('active');
-      thumbs[currentBgIndex].classList.add('active');
-    }
-
-    setInterval(() => {
-      if (!audio.paused) {
-        switchBg((currentBgIndex + 1) % bgImages.length);
-      }
-    }, 10000); // Smooth background transition every 10s
-
-    // --- Lyrics & Language Auto-Detect Logic ---
-    const sampleLyrics = [
-      { time: 0, text: "🎵 (Instrumental Intro)", lang: "en" },
-      { time: 5, text: "Feeling the bass beat inside your heart", lang: "en" },
-      { time: 10, text: "ritmo de la noche bailando libre", lang: "es" },
-      { time: 15, text: "दिल की धड़कन सुनो इस संगीत में", lang: "hi" },
-      { time: 20, text: "音楽は決して止まらない", lang: "ja" },
-      { time: 25, text: "Unstoppable rhythm taking over...", lang: "en" }
-    ];
-
-    function detectLanguage(text) {
-      if (/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text)) return "Japanese";
-      if (/[\u0900-\u097F]/.test(text)) return "Hindi";
-      if (/[ñáéíóúÁÉÍÓÚ]/i.test(text)) return "Spanish";
-      return "English";
-    }
-
-    function updateLyrics(time) {
-      const selectedLang = langSelect.value;
-      const currentLyric = sampleLyrics.slice().reverse().find(l => time >= l.time);
-
-      if (currentLyric) {
-        const detected = detectLanguage(currentLyric.text);
+    <script>
+        const canvas = document.getElementById('visualizer');
+        const ctx = canvas.getContext('2d');
+        const audioElem = document.getElementById('audioElement');
+        const statusTxt = document.getElementById('status');
+        const playBtn = document.getElementById('playBtn');
+        const seekBar = document.getElementById('seekBar');
+        const timeDisplay = document.getElementById('timeDisplay');
         
-        if (selectedLang === 'auto') {
-          detectedLangBadge.textContent = `Auto Detected: ${detected}`;
-          lyricsText.textContent = currentLyric.text;
-        } else {
-          detectedLangBadge.textContent = `Target Language: ${selectedLang.toUpperCase()}`;
-          lyricsText.textContent = currentLyric.text; // Displays active line
+        const freqSlider = document.getElementById('freqSlider');
+        const ampSlider = document.getElementById('ampSlider');
+        const genreSelect = document.getElementById('genreSelect');
+
+        let audioCtx, source, analyser;
+        let isPlaying = false;
+        let visualMode = 'lyrics';
+        
+        let bgImg = new Image();
+        let syncedLyrics = [];
+        let songTitle = "Awaiting Audio";
+        let artistName = "System";
+
+        // Toggle Modes
+        function setVisualMode(mode) {
+            visualMode = mode;
+            document.getElementById('btnModeLyrics').classList.toggle('active', mode === 'lyrics');
+            document.getElementById('btnModeLines').classList.toggle('active', mode === 'lines');
         }
-      }
-    }
 
-    // --- Render Center-Out Mirrored Audio Visualizer (No Rotation) ---
-    function renderVisualizer() {
-      requestAnimationFrame(renderVisualizer);
+        // Draw initial blank state
+        ctx.fillStyle = '#05070f';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Clean transparent clear frame to avoid background going white
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // --- SEARCH MUSIC & MATCH BACKGROUND ---
+        async function searchMusic() {
+            const query = document.getElementById('songQuery').value;
+            if(!query) return;
 
-      if (!analyser) return;
+            statusTxt.innerText = "Searching for track and artwork...";
+            try {
+                // Fetch iTunes Data for high-res album art and audio preview
+                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=1`);
+                const itunesData = await itunesRes.json();
 
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-      analyser.getByteFrequencyData(dataArray);
+                if(itunesData.results.length > 0) {
+                    const track = itunesData.results[0];
+                    songTitle = track.trackName;
+                    artistName = track.artistName;
 
-      const theme = genreSelect.value;
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const barWidth = (canvas.width / 2) / (bufferLength * 0.75);
+                    // Get High-Res 1000x1000 Album Art
+                    let highResArt = track.artworkUrl100.replace('100x100bb', '1000x1000bb');
+                    bgImg.crossOrigin = "anonymous";
+                    bgImg.src = highResArt;
 
-      // Bass energy multiplier for genre reactivity
-      let bassSum = 0;
-      for (let i = 0; i < 10; i++) bassSum += dataArray[i];
-      const bassEnergy = bassSum / 10 / 255;
+                    // Use preview URL if no local file is uploaded
+                    if(!document.getElementById('fullMp3Input').files.length) {
+                        audioElem.src = track.previewUrl;
+                    }
+                }
 
-      // Pulse background image slightly on strong bass
-      if (bgImages[currentBgIndex]) {
-        const scale = 1 + (bassEnergy * (theme === 'phonk' || theme === 'edm' ? 0.08 : 0.03));
-        bgImages[currentBgIndex].style.transform = `scale(${scale})`;
-      }
+                // Fetch Lyrics
+                const lrcRes = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`);
+                const lrcData = await lrcRes.json();
 
-      for (let i = 0; i < bufferLength; i++) {
-        const barHeight = (dataArray[i] / 255) * (canvas.height * 0.45);
+                if(lrcData.length > 0 && lrcData[0].syncedLyrics) {
+                    parseLRC(lrcData[0].syncedLyrics);
+                    statusTxt.innerText = "Match Found! Audio, Artwork & Lyrics loaded.";
+                } else {
+                    statusTxt.innerText = "Match Found! Audio & Artwork loaded (No synced lyrics).";
+                }
 
-        // Center-to-Right offset
-        const xRight = centerX + (i * barWidth);
-        // Center-to-Left offset (Mirrored)
-        const xLeft = centerX - (i * barWidth) - barWidth;
+                initAudioContext();
+            } catch(err) {
+                statusTxt.innerText = "Search Error: " + err.message;
+            }
+        }
 
-        // Apply Genre Color Themes
-        ctx.fillStyle = getGenreColor(theme, i, bufferLength, dataArray[i]);
-        ctx.shadowBlur = theme === 'edm' || theme === 'ncs' ? 15 : 5;
-        ctx.shadowColor = ctx.fillStyle;
+        // --- LOCAL FILE ---
+        document.getElementById('fullMp3Input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            audioElem.src = URL.createObjectURL(file);
+            songTitle = file.name.replace(/\.[^/.]+$/, "");
+            artistName = "Local Upload";
+            initAudioContext();
+            statusTxt.innerText = "Full Local Audio Loaded!";
+        });
 
-        // Draw Right Side Line
-        ctx.fillRect(xRight, centerY - barHeight / 2, barWidth - 1, barHeight);
-        // Draw Left Side Line (Mirrored)
-        ctx.fillRect(xLeft, centerY - barHeight / 2, barWidth - 1, barHeight);
-      }
-    }
+        function parseLRC(lrcString) {
+            syncedLyrics = [];
+            const lines = lrcString.split('\n');
+            const regex = /\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/;
+            for (let line of lines) {
+                const match = line.match(regex);
+                if (match) {
+                    const time = (parseInt(match[1]) * 60) + parseInt(match[2]) + (parseInt(match[3].padEnd(3, '0')) / 1000);
+                    const text = match[4].trim();
+                    if (text) syncedLyrics.push({ time, text });
+                }
+            }
+        }
 
-    // Palette Generator based on Selected Genre
-    function getGenreColor(theme, index, total, value) {
-      const ratio = index / total;
-      switch (theme) {
-        case 'edm': // Neon Pink & Cyan
-          return `hsl(${180 + ratio * 120}, 100%, ${50 + (value / 255) * 20}%)`;
-        case 'phonk': // Dark Red & Deep Purple
-          return `hsl(${280 + ratio * 80}, 90%, ${30 + (value / 255) * 40}%)`;
-        case 'funk': // Teal, Gold, & Orange
-          return `hsl(${30 + ratio * 140}, 100%, ${50 + (value / 255) * 20}%)`;
-        case 'ncs': // Electric Cyan & Bright Yellow
-          return `hsl(${50 + ratio * 130}, 100%, 60%)`;
-        case 'charm': // Soft Pastel Glow
-        default:
-          return `hsl(${200 + ratio * 60}, 70%, ${65 + (value / 255) * 20}%)`;
-      }
-    }
+        // --- AUDIO ENGINE ---
+        function initAudioContext() {
+            if(!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                source = audioCtx.createMediaElementSource(audioElem);
+                analyser = audioCtx.createAnalyser();
+                source.connect(analyser);
+                analyser.connect(audioCtx.destination);
+            }
+            analyser.fftSize = parseInt(freqSlider.value) * 2;
+        }
 
-    // Start Visualizer Rendering Loop
-    renderVisualizer();
-  </script>
+        freqSlider.addEventListener('input', () => {
+            if (analyser) analyser.fftSize = parseInt(freqSlider.value) * 2;
+        });
+
+        playBtn.addEventListener('click', () => {
+            if(!audioElem.src) return;
+            initAudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            if (isPlaying) {
+                audioElem.pause();
+                isPlaying = false;
+                playBtn.innerText = "▶️ PLAY VIDEO";
+            } else {
+                audioElem.play();
+                isPlaying = true;
+                playBtn.innerText = "⏸️ PAUSE VIDEO";
+                renderFrame();
+            }
+        });
+
+        // Scrubber Updates
+        audioElem.addEventListener('timeupdate', () => {
+            if(!audioElem.duration) return;
+            seekBar.value = (audioElem.currentTime / audioElem.duration) * 100;
+            timeDisplay.innerText = `${formatTime(audioElem.currentTime)} / ${formatTime(audioElem.duration)}`;
+        });
+        seekBar.addEventListener('input', () => {
+            if(audioElem.duration) audioElem.currentTime = (seekBar.value / 100) * audioElem.duration;
+        });
+        function formatTime(secs) {
+            const m = Math.floor(secs / 60);
+            const s = Math.floor(secs % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        // --- VISUAL RENDER ENGINE ---
+        function renderFrame() {
+            if (!isPlaying) return;
+            requestAnimationFrame(renderFrame);
+
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const currentTime = audioElem.currentTime;
+
+            // Clear Frame cleanly to avoid white bleed
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Background Image (Covering the Canvas)
+            if (bgImg.complete && bgImg.naturalWidth !== 0) {
+                const imgAspect = bgImg.naturalWidth / bgImg.naturalHeight;
+                const canvasAspect = canvas.width / canvas.height;
+                let drawW, drawH;
+                if (imgAspect > canvasAspect) {
+                    drawH = canvas.height; drawW = canvas.height * imgAspect;
+                } else {
+                    drawW = canvas.width; drawH = canvas.width / imgAspect;
+                }
+                ctx.drawImage(bgImg, (canvas.width - drawW) / 2, (canvas.height - drawH) / 2, drawW, drawH);
+            } else {
+                ctx.fillStyle = '#05070f';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // Vignette Overlay
+            let grad = ctx.createRadialGradient(cx, cy, 300, cx, cy, 1200);
+            grad.addColorStop(0, "rgba(0,0,0,0.5)");
+            grad.addColorStop(1, "rgba(0,0,0,0.95)");
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+
+            // --- MODE: LYRICS ---
+            if (visualMode === 'lyrics') {
+                let activeLyric = "";
+                for (let i = 0; i < syncedLyrics.length; i++) {
+                    if (currentTime >= syncedLyrics[i].time) activeLyric = syncedLyrics[i].text;
+                    else break;
+                }
+
+                if (activeLyric) {
+                    ctx.font = "italic 800 85px 'Montserrat'";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+                    ctx.shadowBlur = 20;
+                    ctx.fillStyle = "#ffffff";
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
+                    ctx.fillText(activeLyric.toUpperCase(), cx, cy);
+                    ctx.strokeText(activeLyric.toUpperCase(), cx, cy);
+                    ctx.shadowBlur = 0;
+                }
+            } 
+            // --- MODE: MIRRORED AUDIO LINES ---
+            else if (visualMode === 'lines') {
+                const numBars = bufferLength / 2; // Use half frequency to fit nicely
+                const barWidth = (canvas.width / 2) / numBars;
+                const amplitudeMultiplier = parseFloat(ampSlider.value);
+                const theme = genreSelect.value;
+
+                for (let i = 0; i < numBars; i++) {
+                    // Line Height mapped to amplitude slider
+                    let barHeight = (dataArray[i] / 255) * (canvas.height * 0.4) * amplitudeMultiplier;
+                    
+                    // The Offset from Center
+                    let xOffset = i * barWidth;
+
+                    // Theme Colors
+                    let ratio = i / numBars;
+                    if(theme === 'edm') ctx.fillStyle = `hsl(${180 + ratio * 120}, 100%, 65%)`;
+                    else if(theme === 'phonk') ctx.fillStyle = `hsl(${280 + ratio * 80}, 90%, 55%)`;
+                    else if(theme === 'funk') ctx.fillStyle = `hsl(${30 + ratio * 140}, 100%, 60%)`;
+                    else ctx.fillStyle = `hsl(${180 + ratio * 30}, 100%, 65%)`; // NCS
+
+                    ctx.shadowColor = ctx.fillStyle;
+                    ctx.shadowBlur = 15;
+
+                    // Right Side (Center -> Right)
+                    ctx.fillRect(cx + xOffset, cy - (barHeight / 2), barWidth - 2, barHeight);
+                    // Left Side Mirrored (Center -> Left)
+                    ctx.fillRect(cx - xOffset - barWidth, cy - (barHeight / 2), barWidth - 2, barHeight);
+                }
+                ctx.shadowBlur = 0;
+
+                // Track Info Overlay below lines
+                ctx.font = "700 48px 'Montserrat'";
+                ctx.fillStyle = "#ffffff";
+                ctx.textAlign = "center";
+                ctx.fillText(songTitle, cx, cy + 220);
+                ctx.font = "600 28px 'Montserrat'";
+                ctx.fillStyle = "rgba(255,255,255,0.6)";
+                ctx.fillText(artistName, cx, cy + 270);
+            }
+        }
+    </script>
 </body>
 </html>
