@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA // STUDIO ENGINE V3</title>
+    <title>AURA // Studio Audio Engine</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,700;0,900;1,800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -27,7 +27,6 @@
             flex-wrap: wrap;
         }
         
-        /* Control Panel */
         .panel {
             background: var(--card);
             padding: 20px;
@@ -38,27 +37,38 @@
             box-shadow: 0 12px 40px rgba(0,0,0,0.8);
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
         }
         h1 { color: var(--primary); font-size: 18px; letter-spacing: 1.5px; text-transform: uppercase; }
         .subtitle { font-size: 11px; color: #64748b; letter-spacing: 1px; margin-top: -8px; }
         
-        label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; display: block; margin-bottom: 4px; }
+        .section-box {
+            background: #05070f;
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .section-title { font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #94a3b8; }
         
         input[type="text"], input[type="file"], input[type="range"], select {
-            width: 100%; padding: 10px; background: #05070f; border: 1px solid var(--border);
-            border-radius: 8px; color: #fff; font-size: 12px; outline: none;
+            width: 100%; padding: 8px; background: #0b0f19; border: 1px solid var(--border);
+            border-radius: 6px; color: #fff; font-size: 12px; outline: none;
         }
-        
-        .search-group { display: flex; gap: 8px; }
+
+        .row { display: flex; gap: 8px; }
         
         button {
-            padding: 10px 16px; background: linear-gradient(135deg, var(--primary), #ff7b00);
-            color: #fff; border: none; border-radius: 8px; font-weight: 800;
+            padding: 8px 14px; background: linear-gradient(135deg, var(--primary), #ff7b00);
+            color: #fff; border: none; border-radius: 6px; font-weight: 800;
             cursor: pointer; text-transform: uppercase; transition: all 0.2s ease; font-size: 11px;
         }
         button:hover { opacity: 0.9; }
-        
+
         /* Mode Selector */
         .mode-selector {
             display: flex; gap: 8px; background: #05070f; padding: 4px; border-radius: 8px; border: 1px solid var(--border);
@@ -68,23 +78,23 @@
         }
         .mode-btn.active { background: var(--primary); color: #fff; }
 
-        /* Video Canvas Player */
+        /* Player Canvas View */
         .player-wrapper { display: flex; flex-direction: column; gap: 8px; }
         .canvas-container {
             background: #000; border-radius: 14px; overflow: hidden;
             border: 2px solid var(--border);
-            width: 854px; height: 480px; /* Scaled 16:9 view */
+            width: 854px; height: 480px; /* 16:9 Aspect Ratio */
             box-shadow: 0 0 50px rgba(0, 240, 255, 0.1);
             position: relative;
         }
         canvas { width: 100%; height: 100%; display: block; }
 
-        /* YouTube Scrubber Line */
+        /* YouTube Scrubber Timeline */
         .yt-scrubber-container {
             width: 854px; background: var(--card); padding: 12px 16px; border-radius: 10px;
             border: 1px solid var(--border); display: flex; align-items: center; gap: 12px;
         }
-        .time-display { font-size: 12px; font-family: monospace; color: var(--accent); min-width: 90px; }
+        .time-display { font-size: 12px; font-family: monospace; color: var(--accent); min-width: 95px; }
         input[type="range"].scrubber {
             flex: 1; -webkit-appearance: none; appearance: none; height: 6px; padding: 0;
             background: #1e293b; border-radius: 3px; cursor: pointer;
@@ -95,7 +105,7 @@
         }
         input[type="range"].scrubber::-webkit-slider-thumb:hover { transform: scale(1.3); }
 
-        #status { font-size: 11px; color: var(--accent); text-align: center; min-height: 18px; }
+        #status { font-size: 11px; color: var(--accent); text-align: center; min-height: 16px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -103,42 +113,77 @@
     <!-- CONTROL PANEL -->
     <div class="panel">
         <h1>⚡ AURA STUDIO</h1>
-        <div class="subtitle">DUAL MODE • ALBUM ART SYNC • AUDIO MIRROR</div>
+        <div class="subtitle">FULL SONG • SEPARATE CONTROLS • BASS REACTIVE</div>
         
-        <label>1. Visual Mode:</label>
+        <!-- Display Mode Switcher -->
+        <label>Visual Display Mode:</label>
         <div class="mode-selector">
             <div class="mode-btn active" id="btnModeLyrics" onclick="setVisualMode('lyrics')">🎤 Lyrics Mode</div>
-            <div class="mode-btn" id="btnModeLines" onclick="setVisualMode('lines')">🎵 Audio Lines Mode</div>
+            <div class="mode-btn" id="btnModeLines" onclick="setVisualMode('lines')">🎵 Audio Spectrum Lines</div>
         </div>
 
-        <label>2. Search Song (Auto-fetches Audio & Album Art):</label>
-        <div class="search-group">
-            <input type="text" id="songQuery" placeholder="e.g. Limitless Elektronomia">
-            <button onclick="searchMusic()">Search</button>
+        <!-- 1. SONG SELECTION SECTION -->
+        <div class="section-box">
+            <div class="section-title">1. Select Song (Full Songs)</div>
+            
+            <label>Upload Full MP3 File (Unlimited Length):</label>
+            <input type="file" id="songFileInput" accept="audio/*">
+
+            <label>Or Full Song Presets (3+ Mins):</label>
+            <select id="songPresetSelect">
+                <option value="">-- Choose Full Song Preset --</option>
+                <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">Preset 1: Electro Synth Wave (6:12)</option>
+                <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3">Preset 2: Chill EDM Beat (5:44)</option>
+                <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3">Preset 3: Upbeat Dance Track (7:05)</option>
+            </select>
+
+            <label>Or Online Preview Search (30s max API preview):</label>
+            <div class="row">
+                <input type="text" id="songQueryInput" placeholder="e.g. Limitless Elektronomia">
+                <button onclick="searchOnlineTrack()">Search</button>
+            </div>
         </div>
 
-        <label>3. Local Audio File (For Full Length):</label>
-        <input type="file" id="fullMp3Input" accept="audio/*">
+        <!-- 2. BACKGROUND SELECTION SECTION -->
+        <div class="section-box">
+            <div class="section-title">2. Select Background Image (Independent)</div>
+            
+            <label>Upload Background Picture:</label>
+            <input type="file" id="bgFileInput" accept="image/*">
 
-        <label>4. Line Frequency (Density):</label>
-        <input type="range" id="freqSlider" min="32" max="256" step="32" value="128">
+            <label>Or Choose Wallpaper Presets:</label>
+            <select id="bgPresetSelect" onchange="loadBgPreset(this.value)">
+                <option value="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1600">Preset 1: Studio Lights</option>
+                <option value="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1600">Preset 2: DJ Concertstage</option>
+                <option value="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1600">Preset 3: Neon Abstract</option>
+                <option value="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=1600">Preset 4: Dark Space Grid</option>
+            </select>
+        </div>
 
-        <label>5. Line Height (Amplitude):</label>
-        <input type="range" id="ampSlider" min="0.5" max="3" step="0.1" value="1.5">
+        <!-- 3. AUDIO LINES CONTROLS -->
+        <div class="section-box">
+            <div class="section-title">3. Line Bounce & Density Controls</div>
+            
+            <label>Line Height / Amplitude (Bass Bounce):</label>
+            <input type="range" id="ampSlider" min="0.5" max="4.0" step="0.1" value="2.0">
 
-        <label>6. Color Genre:</label>
-        <select id="genreSelect">
-            <option value="edm">EDM (Pink/Cyan)</option>
-            <option value="phonk">Phonk (Red/Purple)</option>
-            <option value="funk">Funk (Gold/Teal)</option>
-            <option value="ncs" selected>NCS (Cyan Wave)</option>
-        </select>
+            <label>Line Density (Number of Spectrum Bars):</label>
+            <input type="range" id="densitySlider" min="32" max="128" step="16" value="64">
 
-        <div id="status">Awaiting Input...</div>
+            <label>Color Style:</label>
+            <select id="genreColorSelect">
+                <option value="ncs" selected>NCS (Cyan & Yellow Wave)</option>
+                <option value="edm">EDM (Pink & Neon Cyan)</option>
+                <option value="phonk">Phonk (Deep Red & Violet)</option>
+                <option value="funk">Funk (Gold & Teal)</option>
+            </select>
+        </div>
+
+        <div id="status">Ready</div>
         <button id="playBtn">▶️ PLAY VIDEO</button>
     </div>
 
-    <!-- PLAYER CANVAS -->
+    <!-- PLAYER CANVAS & TIMELINE -->
     <div class="player-wrapper">
         <div class="canvas-container">
             <canvas id="visualizer" width="1920" height="1080"></canvas>
@@ -150,6 +195,7 @@
         </div>
     </div>
 
+    <!-- Hidden HTML5 Audio Element -->
     <audio id="audioElement" crossorigin="anonymous"></audio>
 
     <script>
@@ -161,84 +207,101 @@
         const seekBar = document.getElementById('seekBar');
         const timeDisplay = document.getElementById('timeDisplay');
         
-        const freqSlider = document.getElementById('freqSlider');
         const ampSlider = document.getElementById('ampSlider');
-        const genreSelect = document.getElementById('genreSelect');
+        const densitySlider = document.getElementById('densitySlider');
+        const genreColorSelect = document.getElementById('genreColorSelect');
 
         let audioCtx, source, analyser;
         let isPlaying = false;
         let visualMode = 'lyrics';
         
         let bgImg = new Image();
-        let syncedLyrics = [];
-        let songTitle = "Awaiting Audio";
-        let artistName = "System";
+        // Load default dark background
+        bgImg.crossOrigin = "anonymous";
+        bgImg.src = "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=1600";
 
-        // Toggle Modes
+        let syncedLyrics = [];
+        let songTitle = "Limitless";
+        let artistName = "Elektronomia";
+
         function setVisualMode(mode) {
             visualMode = mode;
             document.getElementById('btnModeLyrics').classList.toggle('active', mode === 'lyrics');
             document.getElementById('btnModeLines').classList.toggle('active', mode === 'lines');
         }
 
-        // Draw initial blank state
-        ctx.fillStyle = '#05070f';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // --- 1. SONG SELECTION HANDLERS ---
+        
+        // A. Local Full MP3 Upload
+        document.getElementById('songFileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            audioElem.src = URL.createObjectURL(file);
+            songTitle = file.name.replace(/\.[^/.]+$/, "");
+            artistName = "Local Song File";
+            initAudio();
+            statusTxt.innerText = "Full Local MP3 Loaded! Ready to play.";
+        });
 
-        // --- SEARCH MUSIC & MATCH BACKGROUND ---
-        async function searchMusic() {
-            const query = document.getElementById('songQuery').value;
+        // B. Full Song Presets
+        document.getElementById('songPresetSelect').addEventListener('change', (e) => {
+            if (!e.target.value) return;
+            audioElem.src = e.target.value;
+            songTitle = e.target.options[e.target.selectedIndex].text.split(':')[1] || "Preset Song";
+            artistName = "Full Length Audio";
+            initAudio();
+            statusTxt.innerText = "Full Song Preset Loaded!";
+        });
+
+        // C. Online Track Search
+        async function searchOnlineTrack() {
+            const query = document.getElementById('songQueryInput').value;
             if(!query) return;
 
-            statusTxt.innerText = "Searching for track and artwork...";
+            statusTxt.innerText = "Searching track & lyrics...";
             try {
-                // Fetch iTunes Data for high-res album art and audio preview
-                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=1`);
-                const itunesData = await itunesRes.json();
+                const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=1`);
+                const data = await res.json();
 
-                if(itunesData.results.length > 0) {
-                    const track = itunesData.results[0];
+                if (data.results.length > 0) {
+                    const track = data.results[0];
+                    audioElem.src = track.previewUrl;
                     songTitle = track.trackName;
                     artistName = track.artistName;
-
-                    // Get High-Res 1000x1000 Album Art
-                    let highResArt = track.artworkUrl100.replace('100x100bb', '1000x1000bb');
-                    bgImg.crossOrigin = "anonymous";
-                    bgImg.src = highResArt;
-
-                    // Use preview URL if no local file is uploaded
-                    if(!document.getElementById('fullMp3Input').files.length) {
-                        audioElem.src = track.previewUrl;
-                    }
+                    initAudio();
+                    statusTxt.innerText = "Online Track Loaded (30s preview).";
                 }
 
-                // Fetch Lyrics
+                // Fetch lyrics
                 const lrcRes = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`);
                 const lrcData = await lrcRes.json();
-
-                if(lrcData.length > 0 && lrcData[0].syncedLyrics) {
+                if (lrcData.length > 0 && lrcData[0].syncedLyrics) {
                     parseLRC(lrcData[0].syncedLyrics);
-                    statusTxt.innerText = "Match Found! Audio, Artwork & Lyrics loaded.";
-                } else {
-                    statusTxt.innerText = "Match Found! Audio & Artwork loaded (No synced lyrics).";
                 }
-
-                initAudioContext();
             } catch(err) {
-                statusTxt.innerText = "Search Error: " + err.message;
+                statusTxt.innerText = "Search failed: " + err.message;
             }
         }
 
-        // --- LOCAL FILE ---
-        document.getElementById('fullMp3Input').addEventListener('change', (e) => {
+        // --- 2. INDEPENDENT BACKGROUND HANDLERS ---
+        document.getElementById('bgFileInput').addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if(!file) return;
-            audioElem.src = URL.createObjectURL(file);
-            songTitle = file.name.replace(/\.[^/.]+$/, "");
-            artistName = "Local Upload";
-            initAudioContext();
-            statusTxt.innerText = "Full Local Audio Loaded!";
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                bgImg = new Image();
+                bgImg.src = evt.target.result;
+                statusTxt.innerText = "Custom Background Loaded!";
+            };
+            reader.readAsDataURL(file);
         });
+
+        function loadBgPreset(url) {
+            bgImg = new Image();
+            bgImg.crossOrigin = "anonymous";
+            bgImg.src = url;
+            statusTxt.innerText = "Background Preset Changed!";
+        }
 
         function parseLRC(lrcString) {
             syncedLyrics = [];
@@ -254,25 +317,24 @@
             }
         }
 
-        // --- AUDIO ENGINE ---
-        function initAudioContext() {
-            if(!audioCtx) {
+        // --- 3. WEB AUDIO ENGINE ---
+        function initAudio() {
+            if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 source = audioCtx.createMediaElementSource(audioElem);
                 analyser = audioCtx.createAnalyser();
                 source.connect(analyser);
                 analyser.connect(audioCtx.destination);
             }
-            analyser.fftSize = parseInt(freqSlider.value) * 2;
+            analyser.fftSize = 256;
         }
 
-        freqSlider.addEventListener('input', () => {
-            if (analyser) analyser.fftSize = parseInt(freqSlider.value) * 2;
-        });
-
         playBtn.addEventListener('click', () => {
-            if(!audioElem.src) return;
-            initAudioContext();
+            if (!audioElem.src) {
+                statusTxt.innerText = "Please select a song first!";
+                return;
+            }
+            initAudio();
             if (audioCtx.state === 'suspended') audioCtx.resume();
 
             if (isPlaying) {
@@ -302,7 +364,7 @@
             return `${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
-        // --- VISUAL RENDER ENGINE ---
+        // --- 4. REAL-TIME BASS-REACTIVE CANVAS RENDERER ---
         function renderFrame() {
             if (!isPlaying) return;
             requestAnimationFrame(renderFrame);
@@ -311,37 +373,40 @@
             const cy = canvas.height / 2;
             const currentTime = audioElem.currentTime;
 
-            // Clear Frame cleanly to avoid white bleed
+            // Clear Frame Cleanly
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Draw Background Image (Covering the Canvas)
+            // Fetch Frequency Data
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+
+            // Calculate Bass Kick Intensity (Lowest 8 Frequencies)
+            let bassSum = 0;
+            for(let b = 0; b < 8; b++) bassSum += dataArray[b];
+            let bassRatio = (bassSum / 8) / 255; // 0.0 to 1.0
+
+            // Draw Background Image (with slight bass scale zoom)
             if (bgImg.complete && bgImg.naturalWidth !== 0) {
-                const imgAspect = bgImg.naturalWidth / bgImg.naturalHeight;
-                const canvasAspect = canvas.width / canvas.height;
-                let drawW, drawH;
-                if (imgAspect > canvasAspect) {
-                    drawH = canvas.height; drawW = canvas.height * imgAspect;
-                } else {
-                    drawW = canvas.width; drawH = canvas.width / imgAspect;
-                }
-                ctx.drawImage(bgImg, (canvas.width - drawW) / 2, (canvas.height - drawH) / 2, drawW, drawH);
+                ctx.save();
+                ctx.translate(cx, cy);
+                let scale = 1 + (bassRatio * 0.04);
+                ctx.scale(scale, scale);
+                ctx.drawImage(bgImg, -canvas.width/2, -canvas.height/2, canvas.width, canvas.height);
+                ctx.restore();
             } else {
                 ctx.fillStyle = '#05070f';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // Vignette Overlay
-            let grad = ctx.createRadialGradient(cx, cy, 300, cx, cy, 1200);
-            grad.addColorStop(0, "rgba(0,0,0,0.5)");
-            grad.addColorStop(1, "rgba(0,0,0,0.95)");
+            // Dark Vignette Overlay
+            let grad = ctx.createRadialGradient(cx, cy, 250, cx, cy, 1200);
+            grad.addColorStop(0, "rgba(0,0,0,0.4)");
+            grad.addColorStop(1, "rgba(0,0,0,0.92)");
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            analyser.getByteFrequencyData(dataArray);
-
-            // --- MODE: LYRICS ---
+            // MODE 1: LYRICS MODE
             if (visualMode === 'lyrics') {
                 let activeLyric = "";
                 for (let i = 0; i < syncedLyrics.length; i++) {
@@ -350,58 +415,87 @@
                 }
 
                 if (activeLyric) {
-                    ctx.font = "italic 800 85px 'Montserrat'";
+                    ctx.font = "italic 800 80px 'Montserrat'";
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
                     ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-                    ctx.shadowBlur = 20;
+                    ctx.shadowBlur = 25;
                     ctx.fillStyle = "#ffffff";
-                    ctx.lineWidth = 3;
-                    ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
+                    ctx.lineWidth = 4;
+                    ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
                     ctx.fillText(activeLyric.toUpperCase(), cx, cy);
                     ctx.strokeText(activeLyric.toUpperCase(), cx, cy);
                     ctx.shadowBlur = 0;
                 }
             } 
-            // --- MODE: MIRRORED AUDIO LINES ---
+            // MODE 2: AUDIO SPECTRUM LINES MODE (NCS/Velorix Style)
             else if (visualMode === 'lines') {
-                const numBars = bufferLength / 2; // Use half frequency to fit nicely
-                const barWidth = (canvas.width / 2) / numBars;
-                const amplitudeMultiplier = parseFloat(ampSlider.value);
-                const theme = genreSelect.value;
+                
+                // 1. Central Pulsing Bass Orb (Glowing behind lines)
+                ctx.save();
+                ctx.beginPath();
+                let orbRadius = 70 + (bassRatio * 90); // Expands heavily on kick/bass
+                let orbGrad = ctx.createRadialGradient(cx, cy, 5, cx, cy, orbRadius);
+                orbGrad.addColorStop(0, "rgba(255, 255, 200, " + (0.7 + bassRatio*0.3) + ")");
+                orbGrad.addColorStop(0.4, "rgba(255, 180, 0, " + (0.4 + bassRatio*0.3) + ")");
+                orbGrad.addColorStop(1, "rgba(255, 0, 85, 0)");
+                ctx.fillStyle = orbGrad;
+                ctx.arc(cx, cy, orbRadius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
+                // 2. Central Horizontal Baseline
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(cx - 500, cy);
+                ctx.lineTo(cx + 500, cy);
+                ctx.stroke();
+
+                // 3. Audio Lines (Dynamic Bass, Mid, Treble Bounces)
+                const numBars = parseInt(densitySlider.value);
+                const barWidth = 8;
+                const spacing = 6;
+                const totalWidth = numBars * (barWidth + spacing);
+                const startX = cx - (totalWidth / 2);
+                const ampMultiplier = parseFloat(ampSlider.value);
+                const colorTheme = genreColorSelect.value;
 
                 for (let i = 0; i < numBars; i++) {
-                    // Line Height mapped to amplitude slider
-                    let barHeight = (dataArray[i] / 255) * (canvas.height * 0.4) * amplitudeMultiplier;
-                    
-                    // The Offset from Center
-                    let xOffset = i * barWidth;
+                    // Logarithmic index sampling so bass, mids, highs react independently
+                    let binIndex = Math.floor(Math.pow(i / numBars, 2) * (bufferLength * 0.8));
+                    let rawVal = dataArray[binIndex] || 0;
 
-                    // Theme Colors
+                    // Boost low bass frequencies on left/center
+                    let freqWeight = (i < numBars * 0.3) ? 1.4 : 1.0;
+                    let barHeight = (rawVal / 255) * (canvas.height * 0.35) * ampMultiplier * freqWeight;
+
+                    let x = startX + i * (barWidth + spacing);
+
+                    // Dynamic Color Themes
                     let ratio = i / numBars;
-                    if(theme === 'edm') ctx.fillStyle = `hsl(${180 + ratio * 120}, 100%, 65%)`;
-                    else if(theme === 'phonk') ctx.fillStyle = `hsl(${280 + ratio * 80}, 90%, 55%)`;
-                    else if(theme === 'funk') ctx.fillStyle = `hsl(${30 + ratio * 140}, 100%, 60%)`;
-                    else ctx.fillStyle = `hsl(${180 + ratio * 30}, 100%, 65%)`; // NCS
+                    if (colorTheme === 'edm') ctx.fillStyle = `hsl(${180 + ratio * 120}, 100%, 65%)`;
+                    else if (colorTheme === 'phonk') ctx.fillStyle = `hsl(${280 + ratio * 80}, 90%, 55%)`;
+                    else if (colorTheme === 'funk') ctx.fillStyle = `hsl(${30 + ratio * 140}, 100%, 60%)`;
+                    else ctx.fillStyle = `hsl(${180 + ratio * 40}, 100%, 70%)`; // NCS
 
                     ctx.shadowColor = ctx.fillStyle;
-                    ctx.shadowBlur = 15;
+                    ctx.shadowBlur = 10;
 
-                    // Right Side (Center -> Right)
-                    ctx.fillRect(cx + xOffset, cy - (barHeight / 2), barWidth - 2, barHeight);
-                    // Left Side Mirrored (Center -> Left)
-                    ctx.fillRect(cx - xOffset - barWidth, cy - (barHeight / 2), barWidth - 2, barHeight);
+                    // Dual direction vertical spectrum lines radiating from baseline
+                    ctx.fillRect(x, cy - (barHeight / 2), barWidth, barHeight);
                 }
                 ctx.shadowBlur = 0;
 
-                // Track Info Overlay below lines
-                ctx.font = "700 48px 'Montserrat'";
+                // 4. Track Titles Below Lines
+                ctx.font = "700 46px 'Montserrat'";
                 ctx.fillStyle = "#ffffff";
                 ctx.textAlign = "center";
-                ctx.fillText(songTitle, cx, cy + 220);
-                ctx.font = "600 28px 'Montserrat'";
-                ctx.fillStyle = "rgba(255,255,255,0.6)";
-                ctx.fillText(artistName, cx, cy + 270);
+                ctx.fillText(songTitle, cx, cy + 180);
+
+                ctx.font = "600 26px 'Montserrat'";
+                ctx.fillStyle = "rgba(255,255,255,0.65)";
+                ctx.fillText(artistName, cx, cy + 225);
             }
         }
     </script>
