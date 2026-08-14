@@ -3,74 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA // 7CLOUDS LYRIC ENGINE</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@1,800&display=swap" rel="stylesheet">
+    <title>AURA // 7CLOUDS FULL SONG & MULTI-BG LYRIC ENGINE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@1,800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #05070f; --card: #0d111d; --primary: #ff0055;
-            --text: #f8fafc; --border: #1e293b;
+            --bg: #05070f;
+            --card: #0d111d;
+            --primary: #ff0055;
+            --accent: #00f0ff;
+            --text: #f8fafc;
+            --border: #1e293b;
         }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background-color: var(--bg); color: var(--text);
-            margin: 0; padding: 20px; display: flex; gap: 20px;
-            justify-content: center; flex-wrap: wrap; align-items: flex-start;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
         }
-        .panel {
-            background: var(--card); padding: 24px; border-radius: 12px;
-            width: 100%; max-width: 400px; border: 1px solid var(--border);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.8);
-        }
-        h1 { margin: 0 0 4px; color: var(--primary); font-size: 20px; letter-spacing: 2px; }
-        .subtitle { font-size: 11px; color: #64748b; margin-bottom: 20px; letter-spacing: 1px; }
-        label { display: block; margin: 12px 0 6px; font-size: 12px; font-weight: 700; color: #94a3b8; }
-        input[type="text"] {
-            width: 100%; padding: 12px; background: #05070f; border: 1px solid var(--border);
-            border-radius: 6px; color: #fff; box-sizing: border-box; font-size: 14px;
-        }
-        .search-group { display: flex; gap: 8px; }
-        button {
-            padding: 14px; background: linear-gradient(135deg, var(--primary), #ff7b00);
-            color: #fff; border: none; border-radius: 6px; font-weight: 900;
-            cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 12px;
-        }
-        button:hover { opacity: 0.9; }
-        button:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
-        .search-group button { width: auto; }
         
+        /* Control Panel */
+        .panel {
+            background: var(--card);
+            padding: 24px;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 440px;
+            border: 1px solid var(--border);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        h1 { color: var(--primary); font-size: 20px; letter-spacing: 2px; text-transform: uppercase; }
+        .subtitle { font-size: 11px; color: #64748b; letter-spacing: 1px; margin-top: -10px; }
+        
+        label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; display: block; margin-bottom: 6px; }
+        
+        input[type="text"], input[type="file"] {
+            width: 100%; padding: 12px; background: #05070f; border: 1px solid var(--border);
+            border-radius: 8px; color: #fff; font-size: 13px;
+        }
+        
+        .search-group { display: flex; gap: 8px; }
+        
+        button {
+            padding: 12px 18px; background: linear-gradient(135deg, var(--primary), #ff7b00);
+            color: #fff; border: none; border-radius: 8px; font-weight: 800;
+            cursor: pointer; text-transform: uppercase; transition: all 0.2s ease;
+            font-size: 12px;
+        }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        button:disabled { background: #334155; color: #64748b; cursor: not-allowed; transform: none; }
+        
+        /* Song Selection List */
+        .results-list {
+            max-height: 140px; overflow-y: auto; background: #05070f;
+            border: 1px solid var(--border); border-radius: 8px;
+            display: flex; flex-direction: column; gap: 4px; padding: 6px;
+        }
+        .track-item {
+            padding: 8px 10px; background: #0d111d; border-radius: 6px; cursor: pointer;
+            font-size: 12px; display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid transparent; transition: all 0.2s;
+        }
+        .track-item:hover, .track-item.active {
+            border-color: var(--primary); background: rgba(255, 0, 85, 0.1);
+        }
+        .track-info { display: flex; flex-direction: column; overflow: hidden; white-space: nowrap; }
+        .track-title { font-weight: 700; color: #fff; text-overflow: ellipsis; overflow: hidden; }
+        .track-artist { font-size: 10px; color: #64748b; }
+
+        /* Background Selection Grid */
+        .bg-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+        }
+        .bg-thumb {
+            width: 100%; aspect-ratio: 16/9; border-radius: 6px; object-fit: cover;
+            cursor: pointer; border: 2px solid transparent; transition: all 0.2s;
+            background: #05070f;
+        }
+        .bg-thumb:hover, .bg-thumb.active {
+            border-color: var(--accent); transform: scale(1.05); box-shadow: 0 0 12px rgba(0,240,255,0.4);
+        }
+
+        /* Canvas Box */
         .canvas-container {
-            background: #000; border-radius: 12px; overflow: hidden;
+            background: #000; border-radius: 14px; overflow: hidden;
             border: 2px solid var(--border);
-            /* Scaled down for UI viewing, but internal resolution is 1920x1080 */
-            width: 854px; height: 480px; 
+            width: 854px; height: 480px; /* CSS scale for 1920x1080 */
             box-shadow: 0 0 50px rgba(255, 0, 85, 0.15);
+            position: relative;
         }
         canvas { width: 100%; height: 100%; display: block; }
-        #status { font-size: 11px; color: var(--primary); margin-top: 10px; text-align: center; height: 30px;}
-        .lyric-box { font-size: 11px; color: #94a3b8; margin-top: 15px; max-height: 100px; overflow-y: auto; background: #05070f; padding: 10px; border-radius: 6px;}
+        
+        #status { font-size: 11px; color: var(--accent); text-align: center; min-height: 24px; }
+        .full-mp3-box { border-top: 1px dashed var(--border); padding-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="panel">
-        <h1>AURA // LYRIC ENGINE</h1>
-        <div class="subtitle">16:9 LANDSCAPE • GENERATIVE BG • AUTO-SYNC</div>
+        <h1>⚡ AURA LYRIC ENGINE</h1>
+        <div class="subtitle">16:9 LANDSCAPE • MULTI-TRACK • MULTI-BG</div>
         
-        <label>Search Song (Artist & Title):</label>
-        <div class="search-group">
-            <input type="text" id="songQuery" placeholder="e.g. Faded Alan Walker">
-            <button onclick="fetchSongData()">Search</button>
+        <!-- 1. Song Search -->
+        <div>
+            <label>1. Search Song Name / Artist:</label>
+            <div class="search-group">
+                <input type="text" id="songQuery" placeholder="e.g. Starboy Weeknd">
+                <button onclick="searchMusic()">Search</button>
+            </div>
         </div>
 
-        <div id="status">Waiting for search...</div>
-        
-        <div class="lyric-box" id="lyricPreview">Lyrics will appear here...</div>
+        <!-- 2. Select Music Result -->
+        <div>
+            <label>2. Select Song Track Result:</label>
+            <div class="results-list" id="songResults">
+                <div style="font-size:11px; color:#64748b; padding:10px; text-align:center;">Search for a song to view tracks...</div>
+            </div>
+        </div>
 
-        <button id="playBtn" disabled>▶️ PLAY VIDEO</button>
+        <!-- 3. Select Background -->
+        <div>
+            <label>3. Select Preferred AI Background:</label>
+            <div class="bg-grid" id="bgGrid">
+                <div style="grid-column: span 4; font-size:11px; color:#64748b; text-align:center; padding:10px; background:#05070f; border-radius:6px;">Backgrounds load after searching...</div>
+            </div>
+        </div>
+
+        <!-- 4. Optional Full MP3 Override -->
+        <div class="full-mp3-box">
+            <label>Optional: Upload Full Song MP3 (Syncs with Lyrics):</label>
+            <input type="file" id="fullMp3Input" accept="audio/*">
+        </div>
+
+        <div id="status">Ready</div>
+
+        <button id="playBtn" disabled>▶️ PLAY 16:9 LYRIC VIDEO</button>
     </div>
 
+    <!-- Canvas Preview (1920x1080 Native) -->
     <div class="canvas-container">
-        <!-- Strictly set to 1920x1080 Landscape -->
         <canvas id="visualizer" width="1920" height="1080"></canvas>
     </div>
 
@@ -79,6 +158,8 @@
         const ctx = canvas.getContext('2d');
         const statusTxt = document.getElementById('status');
         const playBtn = document.getElementById('playBtn');
+        const songResultsContainer = document.getElementById('songResults');
+        const bgGridContainer = document.getElementById('bgGrid');
 
         let bgImg = new Image();
         let audioCtx, source, analyser;
@@ -87,79 +168,153 @@
         let startTime = 0;
         
         let syncedLyrics = [];
-        let currentLyricIndex = -1;
+        let selectedTrack = null;
 
-        // Ensure font is loaded before drawing
-        document.fonts.load("800 60px 'Montserrat'").then(() => {
-            drawIdleState();
-        });
+        // Ensure font is pre-loaded for canvas rendering
+        document.fonts.load("italic 800 85px 'Montserrat'").then(() => drawIdleState());
 
         function drawIdleState() {
             ctx.fillStyle = '#05070f';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#1e293b';
-            ctx.font = "800 40px 'Montserrat'";
+            ctx.font = "italic 800 50px 'Montserrat'";
             ctx.textAlign = 'center';
-            ctx.fillText("READY TO GENERATE", canvas.width/2, canvas.height/2);
+            ctx.fillText("7CLOUDS LYRIC ENGINE READY", canvas.width/2, canvas.height/2);
         }
 
-        async function fetchSongData() {
+        // --- 1. SEARCH SEVERAL SONGS ---
+        async function searchMusic() {
             const query = document.getElementById('songQuery').value;
             if(!query) return;
             
-            playBtn.disabled = true;
-            statusTxt.innerHTML = "Fetching Audio & Lyrics...<br>Please wait.";
-            syncedLyrics = [];
-
+            statusTxt.innerText = "Searching songs and lyrics...";
+            songResultsContainer.innerHTML = `<div style="font-size:11px; color:#00f0ff; padding:10px; text-align:center;">Searching...</div>`;
+            
             try {
-                // 1. Fetch Audio from iTunes
-                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=1`);
+                // Fetch multiple tracks from LRCLIB for synced lyrics + iTunes for audio stream
+                const [lrcRes, itunesRes] = await Promise.all([
+                    fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`),
+                    fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=5`)
+                ]);
+
+                const lrcData = await lrcRes.json();
                 const itunesData = await itunesRes.json();
-                
-                if(itunesData.results.length === 0) {
-                    statusTxt.innerText = "Error: Song audio not found.";
+
+                if(!itunesData.results || itunesData.results.length === 0) {
+                    songResultsContainer.innerHTML = `<div style="font-size:11px; color:#ff0055; padding:10px; text-align:center;">No results found.</div>`;
                     return;
                 }
-                const track = itunesData.results[0];
-                const safeQuery = `${track.trackName} ${track.artistName}`;
 
-                // 2. Fetch Synced Lyrics from LRCLIB
-                const lrcRes = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(safeQuery)}`);
-                const lrcData = await lrcRes.json();
-                
-                const lyricTrack = lrcData.find(t => t.syncedLyrics);
-                if (lyricTrack) {
-                    parseLRC(lyricTrack.syncedLyrics);
-                    document.getElementById('lyricPreview').innerText = lyricTrack.syncedLyrics;
-                } else {
-                    document.getElementById('lyricPreview').innerText = "No synced lyrics found for this track. Instrumental mode.";
-                }
+                songResultsContainer.innerHTML = '';
 
-                // 3. Generate Unofficial Background via Pollinations AI
-                // We add prompt keywords to ensure a beautiful, lyric-video style landscape
-                statusTxt.innerHTML = "Generating AI Background...<br>This takes a moment.";
-                const aiPrompt = `${track.trackName} ${track.artistName} aesthetic cinematic landscape dark atmospheric wallpaper hd`;
-                bgImg.crossOrigin = "anonymous";
-                bgImg.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(aiPrompt)}?width=1920&height=1080&nologo=true`;
+                // Render list of several tracks
+                itunesData.results.forEach((track, index) => {
+                    const item = document.createElement('div');
+                    item.className = `track-item ${index === 0 ? 'active' : ''}`;
+                    item.innerHTML = `
+                        <div class="track-info">
+                            <span class="track-title">${track.trackName}</span>
+                            <span class="track-artist">${track.artistName} • ${track.collectionName || 'Single'}</span>
+                        </div>
+                        <span style="font-size:10px; color:#00f0ff;">SELECT</span>
+                    `;
+                    item.onclick = () => {
+                        document.querySelectorAll('.track-item').forEach(el => el.classList.remove('active'));
+                        item.classList.add('active');
+                        loadSelectedTrack(track, lrcData);
+                    };
+                    songResultsContainer.appendChild(item);
+                });
 
-                // 4. Download and Decode Audio
-                const audioRes = await fetch(track.previewUrl);
-                const arrayBuffer = await audioRes.arrayBuffer();
-                
-                if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-
-                bgImg.onload = () => {
-                    statusTxt.innerHTML = `Loaded: ${track.trackName}<br>Ready to Play.`;
-                    playBtn.disabled = false;
-                };
+                // Auto-load first track result & generate background choices
+                generateBackgrounds(query);
+                loadSelectedTrack(itunesData.results[0], lrcData);
 
             } catch(err) {
-                statusTxt.innerText = "Error: " + err.message;
+                statusTxt.innerText = "Search Error: " + err.message;
             }
         }
 
-        // Parses standard .lrc format [mm:ss.xx] Lyric text
+        // --- 2. GENERATE SEVERAL BACKGROUND OPTIONS ---
+        function generateBackgrounds(query) {
+            bgGridContainer.innerHTML = '';
+            statusTxt.innerText = "Generating 4 AI background options...";
+
+            // 4 distinct artistic aesthetic styles
+            const styles = [
+                `cinematic atmospheric landscape artwork for ${query} dynamic lighting wallpaper`,
+                `neon cyberpunk futuristic dark aesthetic wallpaper for ${query}`,
+                `fantasy mystical dramatic clouds surreal art for ${query}`,
+                `lofi dark anime aesthetic scenic background for ${query}`
+            ];
+
+            styles.forEach((promptText, index) => {
+                const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=1920&height=1080&nologo=true&seed=${(index+1)*123}`;
+                
+                const imgThumb = document.createElement('img');
+                imgThumb.className = `bg-thumb ${index === 0 ? 'active' : ''}`;
+                imgThumb.src = imgUrl;
+
+                imgThumb.onclick = () => {
+                    document.querySelectorAll('.bg-thumb').forEach(el => el.classList.remove('active'));
+                    imgThumb.classList.add('active');
+                    bgImg.crossOrigin = "anonymous";
+                    bgImg.src = imgUrl;
+                    statusTxt.innerText = "Background updated!";
+                };
+
+                bgGridContainer.appendChild(imgThumb);
+
+                if (index === 0) {
+                    bgImg.crossOrigin = "anonymous";
+                    bgImg.src = imgUrl;
+                }
+            });
+        }
+
+        // --- 3. LOAD SELECTED TRACK & SYNCHRONIZED LYRICS ---
+        async function loadSelectedTrack(track, lrcData) {
+            selectedTrack = track;
+            playBtn.disabled = true;
+            statusTxt.innerText = `Loading track: ${track.trackName}...`;
+
+            // Find matching lyrics from LRCLIB search
+            const lyricMatch = lrcData.find(l => l.syncedLyrics && l.trackName.toLowerCase().includes(track.trackName.toLowerCase())) || lrcData.find(l => l.syncedLyrics);
+
+            if (lyricMatch && lyricMatch.syncedLyrics) {
+                parseLRC(lyricMatch.syncedLyrics);
+            } else {
+                syncedLyrics = [];
+                statusTxt.innerText = "No synced lyrics available for this track.";
+            }
+
+            // Fetch and Decode Audio preview or local MP3
+            if (!document.getElementById('fullMp3Input').files.length) {
+                const audioRes = await fetch(track.previewUrl);
+                const arrayBuffer = await audioRes.arrayBuffer();
+                if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            }
+
+            playBtn.disabled = false;
+            statusTxt.innerText = `Ready: ${track.trackName} - ${track.artistName}`;
+        }
+
+        // --- 4. OPTIONAL FULL MP3 OVERRIDE ---
+        document.getElementById('fullMp3Input').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            statusTxt.innerText = "Decoding full local MP3 file...";
+            
+            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const arrayBuffer = await file.arrayBuffer();
+            audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            
+            playBtn.disabled = false;
+            statusTxt.innerText = "Full MP3 Loaded and Synced!";
+        });
+
+        // Parse .lrc synced lyrics
         function parseLRC(lrcString) {
             syncedLyrics = [];
             const lines = lrcString.split('\n');
@@ -173,10 +328,7 @@
                     const ms = parseInt(match[3].padEnd(3, '0'));
                     const timeInSeconds = (minutes * 60) + seconds + (ms / 1000);
                     const text = match[4].trim();
-                    
-                    if (text) {
-                        syncedLyrics.push({ time: timeInSeconds, text: text });
-                    }
+                    if (text) syncedLyrics.push({ time: timeInSeconds, text: text });
                 }
             }
         }
@@ -197,7 +349,7 @@
             if (isPlaying) {
                 source.stop();
                 isPlaying = false;
-                playBtn.innerText = "▶️ PLAY VIDEO";
+                playBtn.innerText = "▶️ PLAY 16:9 LYRIC VIDEO";
             } else {
                 setupAudio();
                 source.start(0);
@@ -208,7 +360,7 @@
             }
         });
 
-        // Smart text wrapping function for lyrics
+        // Smart text wrapping for 7clouds dynamic placement
         function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
             let words = text.split(' ');
             let line = '';
@@ -216,8 +368,7 @@
 
             for(let n = 0; n < words.length; n++) {
                 let testLine = line + words[n] + ' ';
-                let metrics = ctx.measureText(testLine);
-                let testWidth = metrics.width;
+                let testWidth = ctx.measureText(testLine).width;
                 if (testWidth > maxWidth && n > 0) {
                     linesArray.push(line);
                     line = words[n] + ' ';
@@ -227,7 +378,6 @@
             }
             linesArray.push(line);
 
-            // Center vertically based on number of lines
             let startY = y - ((linesArray.length - 1) * lineHeight) / 2;
 
             for(let k = 0; k < linesArray.length; k++) {
@@ -236,92 +386,88 @@
             }
         }
 
+        // --- 5. CANVAS RENDER LOOP (1920x1080 LANDSCAPE) ---
         function renderFrame() {
             if (!isPlaying) return;
             requestAnimationFrame(renderFrame);
 
             const currentTime = audioCtx.currentTime - startTime;
             
-            // Stop if audio is done
             if (currentTime >= audioBuffer.duration) {
                 isPlaying = false;
-                playBtn.innerText = "▶️ PLAY VIDEO";
+                playBtn.innerText = "▶️ PLAY 16:9 LYRIC VIDEO";
                 return;
             }
 
-            // Audio Analysis for subtle background pulsing
+            // Audio pulse
             const dataArray = new Uint8Array(analyser.frequencyBinCount);
             analyser.getByteFrequencyData(dataArray);
             let bass = (dataArray[0] + dataArray[1] + dataArray[2]) / 3;
-            let kickPump = bass > 200 ? (bass - 200) / 100 : 0;
+            let kickPump = bass > 200 ? (bass - 200) / 120 : 0;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Draw Background with subtle audio-reactive scale
             const cx = canvas.width / 2;
             const cy = canvas.height / 2;
-            const scale = 1 + (kickPump * 0.05);
-            
-            ctx.save();
-            ctx.translate(cx, cy);
-            ctx.scale(scale, scale);
-            ctx.drawImage(bgImg, -canvas.width/2, -canvas.height/2, canvas.width, canvas.height);
-            ctx.restore();
+            const scale = 1 + (kickPump * 0.04);
 
-            // 2. Smart Cinematic Vignette (Ensures text readability everywhere)
-            let grad = ctx.createRadialGradient(cx, cy, 200, cx, cy, 1200);
-            grad.addColorStop(0, "rgba(0,0,0,0.3)");
-            grad.addColorStop(1, "rgba(0,0,0,0.85)");
+            // Draw Selected Background
+            if (bgImg.complete && bgImg.naturalWidth !== 0) {
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.scale(scale, scale);
+                ctx.drawImage(bgImg, -canvas.width/2, -canvas.height/2, canvas.width, canvas.height);
+                ctx.restore();
+            }
+
+            // Cinematic Dark Vignette for ultimate text readability
+            let grad = ctx.createRadialGradient(cx, cy, 300, cx, cy, 1100);
+            grad.addColorStop(0, "rgba(0,0,0,0.35)");
+            grad.addColorStop(1, "rgba(0,0,0,0.88)");
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 3. Find current lyric
+            // Active & Next Lyric Lookup
             let activeLyric = "";
             let nextLyric = "";
             
             for (let i = 0; i < syncedLyrics.length; i++) {
                 if (currentTime >= syncedLyrics[i].time) {
                     activeLyric = syncedLyrics[i].text;
-                    if (i + 1 < syncedLyrics.length) {
-                        nextLyric = syncedLyrics[i+1].text;
-                    }
+                    if (i + 1 < syncedLyrics.length) nextLyric = syncedLyrics[i+1].text;
                 } else {
                     break;
                 }
             }
 
-            // 4. Draw Next Lyric (Faded, Smaller, above or below)
+            // Draw Upcoming Line (Preview)
             if (nextLyric) {
-                ctx.font = "800 40px 'Montserrat'";
-                ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+                ctx.font = "800 36px 'Montserrat'";
+                ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
                 ctx.textAlign = "center";
-                ctx.shadowBlur = 0;
                 ctx.fillText(nextLyric, cx, cy + 180);
             }
 
-            // 5. Draw Active Lyric (7clouds style: Bold, Center, Drop Shadow)
+            // Draw Active Lyric (7clouds Typography)
             if (activeLyric) {
                 ctx.font = "italic 800 85px 'Montserrat'";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 
-                // Heavy shadows for readability
-                ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-                ctx.shadowBlur = 25;
-                ctx.shadowOffsetX = 8;
-                ctx.shadowOffsetY = 8;
+                // Heavy multi-layer shadows for crisp visibility on any background
+                ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+                ctx.shadowBlur = 30;
+                ctx.shadowOffsetX = 6;
+                ctx.shadowOffsetY = 6;
 
                 ctx.fillStyle = "#ffffff";
-                
-                // Subtle stroke to cut through bright backgrounds
-                ctx.lineWidth = 3;
-                ctx.strokeStyle = "rgba(0,0,0,0.5)";
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
 
-                // Analyze constraints: Max width is 80% of canvas
-                const maxTextWidth = canvas.width * 0.8;
-                wrapText(ctx, activeLyric.toUpperCase(), cx, cy, maxTextWidth, 100);
+                const maxTextWidth = canvas.width * 0.82;
+                wrapText(ctx, activeLyric.toUpperCase(), cx, cy, maxTextWidth, 105);
                 
-                ctx.shadowBlur = 0; // reset
+                ctx.shadowBlur = 0;
             }
         }
     </script>
